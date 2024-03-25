@@ -1,3 +1,4 @@
+import 'package:emoshare_diary/common/const/colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -40,7 +41,7 @@ class DefaultLayout extends StatelessWidget {
     SystemChrome.setPreferredOrientations([deviceOrientation]);
 
     return Scaffold(
-      backgroundColor: backgroundColor ?? Colors.white,
+      backgroundColor: backgroundColor ?? BACKGROUND_COLOR,
       appBar: renderAppBar(),
       drawer: drawer,
       drawerEnableOpenDragGesture: drawerEnableOpenDragGesture,
@@ -56,7 +57,7 @@ class DefaultLayout extends StatelessWidget {
     } else {
       return AppBar(
         scrolledUnderElevation: 0.0,
-        backgroundColor: appBarBackGroundColor ?? Colors.white,
+        backgroundColor: appBarBackGroundColor ?? BACKGROUND_COLOR,
         elevation: 0,
         centerTitle: true,
         toolbarHeight: appBarHeight,

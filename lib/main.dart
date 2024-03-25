@@ -1,14 +1,16 @@
 import 'package:emoshare_diary/common/view/root_tab.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
 void main() {
-  runApp(const _App());
+  WidgetsFlutterBinding.ensureInitialized();
+
+  initializeDateFormatting().then((_) => runApp(const _App()));
 }
 
 class _App extends StatelessWidget {
   const _App();
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return const MaterialApp(
