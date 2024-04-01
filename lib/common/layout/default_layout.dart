@@ -17,6 +17,7 @@ class DefaultLayout extends StatelessWidget {
   final double? appBarHeight;
   final DeviceOrientation deviceOrientation;
   final PreferredSizeWidget? bottom;
+  final List<Widget>? actions;
 
   const DefaultLayout({
     required this.child,
@@ -33,6 +34,7 @@ class DefaultLayout extends StatelessWidget {
     this.bottom,
     this.drawerEnableOpenDragGesture = false,
     this.deviceOrientation = DeviceOrientation.portraitUp,
+    this.actions,
     super.key,
   });
 
@@ -62,6 +64,7 @@ class DefaultLayout extends StatelessWidget {
         centerTitle: true,
         toolbarHeight: appBarHeight,
         leadingWidth: leadingWidth,
+        actions: actions,
         titleSpacing: titleSpacing,
         title: titleWidget ??
             Text(
