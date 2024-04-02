@@ -5,7 +5,7 @@ import 'package:flutter/services.dart';
 class CustomTextFormField extends StatelessWidget {
   final _customoutlineInputBorder = InputBorder.none;
 
-  final ValueKey valueKey;
+  final ValueKey? valueKey;
   final String? Function(String?)? validator;
   final void Function(String?)? onSaved;
   final String? hintText;
@@ -22,7 +22,7 @@ class CustomTextFormField extends StatelessWidget {
 
   const CustomTextFormField({
     super.key,
-    required this.valueKey,
+    this.valueKey,
     this.validator,
     this.onSaved,
     this.hintText,

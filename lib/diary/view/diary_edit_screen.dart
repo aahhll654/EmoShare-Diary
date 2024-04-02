@@ -45,89 +45,126 @@ class _DiaryEditScreenState extends ConsumerState<DiaryEditScreen> {
   Widget build(BuildContext context) {
     final localDatabase = ref.watch(localDatabaseProvider);
 
-    return DefaultLayout(
-      title: '${widget.date.year}년 ${widget.date.month}월 ${widget.date.day}일',
-      actions: [
-        TextButton(
-          onPressed: () async {
-            if (!isLoading) {
-              formKey.currentState!.save();
+    return PopScope(
+      canPop: false,
+      onPopInvoked: (_) {
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            surfaceTintColor: BACKGROUND_COLOR,
+            backgroundColor: BACKGROUND_COLOR,
+            content: const Text(
+              '저장하지 않고 종료하시겠습니까?',
+              style: TextStyle(fontSize: 16.0),
+            ),
+            actions: [
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  foregroundColor: Colors.black,
+                ),
+                onPressed: () {
+                  context.pop();
+                  context.pop();
+                },
+                child: const Text('예'),
+              ),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  foregroundColor: Colors.black,
+                ),
+                onPressed: () {
+                  context.pop();
+                },
+                child: const Text('아니오'),
+              ),
+            ],
+          ),
+        );
+      },
+      child: DefaultLayout(
+        title: '${widget.date.year}년 ${widget.date.month}월 ${widget.date.day}일',
+        actions: [
+          TextButton(
+            onPressed: () async {
+              if (!isLoading) {
+                formKey.currentState!.save();
 
-              if (!isCreated) {
-                await localDatabase.createDiaryInfo(
-                  DiaryInfosCompanion(
-                    date: d.Value(widget.date),
-                    content: d.Value(content),
-                    summary: const d.Value(''),
-                    createdAt: d.Value(DateTime.now()),
-                    updatedAt: d.Value(DateTime.now()),
-                  ),
-                );
-              } else {
-                await localDatabase.updateDiaryInfo(
-                  widget.date,
-                  content,
-                  DateTime.now(),
-                );
+                if (!isCreated) {
+                  await localDatabase.createDiaryInfo(
+                    DiaryInfosCompanion(
+                      date: d.Value(widget.date),
+                      content: d.Value(content),
+                      summary: const d.Value(''),
+                      createdAt: d.Value(DateTime.now()),
+                      updatedAt: d.Value(DateTime.now()),
+                    ),
+                  );
+                } else {
+                  await localDatabase.updateDiaryInfo(
+                    widget.date,
+                    content,
+                    DateTime.now(),
+                  );
+                }
               }
-            }
 
-            context.pop();
-          },
-          child: const Text(
-            '저장',
-            style: TextStyle(
-              color: Colors.blue,
+              context.pop();
+            },
+            child: const Text(
+              '저장',
+              style: TextStyle(
+                color: Colors.blue,
+              ),
             ),
           ),
-        ),
-      ],
-      child: FutureBuilder(
-        future: localDatabase.watchDiaryInfos(widget.date).first,
-        builder: (context, snapshot) {
-          if (!snapshot.hasData) {
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
-          } else {
-            if (snapshot.data!.isEmpty) {
+        ],
+        child: FutureBuilder(
+          future: localDatabase.watchDiaryInfos(widget.date).first,
+          builder: (context, snapshot) {
+            if (!snapshot.hasData) {
+              return const Center(
+                child: CircularProgressIndicator(),
+              );
             } else {
-              isCreated = true;
-              final diaryInfo = snapshot.data!.first;
-              content = diaryInfo.content;
-            }
+              if (snapshot.data!.isEmpty) {
+              } else {
+                isCreated = true;
+                final diaryInfo = snapshot.data!.first;
+                content = diaryInfo.content;
+              }
 
-            isLoading = false;
+              isLoading = false;
 
-            return Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Form(
-                key: formKey,
-                child: KeyboardActions(
-                  config: _buildKeyboardActionsConfig(context),
-                  child: Column(
-                    children: [
-                      CustomTextFormField(
-                        valueKey: const ValueKey(1),
-                        onSaved: (value) {
-                          if (value != null) {
-                            content = value;
-                          } else {
-                            content = '';
-                          }
-                        },
-                        initialValue: content,
-                        maxLines: null,
-                        autofocus: true,
-                        focusNode: _diaryFocus,
-                      ),
-                    ],
+              return Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Form(
+                  key: formKey,
+                  child: KeyboardActions(
+                    config: _buildKeyboardActionsConfig(context),
+                    child: Column(
+                      children: [
+                        CustomTextFormField(
+                          valueKey: const ValueKey(1),
+                          onSaved: (value) {
+                            if (value != null) {
+                              content = value;
+                            } else {
+                              content = '';
+                            }
+                          },
+                          initialValue: content,
+                          maxLines: null,
+                          autofocus: !isCreated,
+                          focusNode: _diaryFocus,
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            );
-          }
-        },
+              );
+            }
+          },
+        ),
       ),
     );
   }

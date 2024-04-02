@@ -1,18 +1,20 @@
 import 'package:emoshare_diary/common/const/colors.dart';
+import 'package:emoshare_diary/common/database/drift_database.dart';
+import 'package:emoshare_diary/diary/component/create_new_diary_button.dart';
 import 'package:emoshare_diary/diary/component/custom_table_calendar.dart';
-import 'package:emoshare_diary/diary/view/diary_edit_screen.dart';
+import 'package:emoshare_diary/diary/component/diary_scroll_view.dart';
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:table_calendar/table_calendar.dart';
 
-class DiaryScreen extends StatefulWidget {
+class DiaryScreen extends ConsumerStatefulWidget {
   const DiaryScreen({super.key});
 
   @override
-  State<DiaryScreen> createState() => _DiaryScreenState();
+  ConsumerState<DiaryScreen> createState() => _DiaryScreenState();
 }
 
-class _DiaryScreenState extends State<DiaryScreen>
+class _DiaryScreenState extends ConsumerState<DiaryScreen>
     with AutomaticKeepAliveClientMixin<DiaryScreen> {
   DateTime _selectedDay = DateTime.utc(
     DateTime.now().year,
@@ -29,6 +31,7 @@ class _DiaryScreenState extends State<DiaryScreen>
   @override
   Widget build(BuildContext context) {
     super.build(context);
+    final localDatabase = ref.watch(localDatabaseProvider);
 
     return SafeArea(
       child: Column(
@@ -69,16 +72,9 @@ class _DiaryScreenState extends State<DiaryScreen>
               clipBehavior: Clip.hardEdge,
               width: double.infinity,
               height: 20,
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 color: PRIMARY_COLOR,
-                borderRadius: BorderRadius.circular(16.0),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.grey.withOpacity(0.7),
-                    blurRadius: 3.0,
-                    offset: const Offset(0, 4),
-                  )
-                ],
+                borderRadius: BorderRadius.vertical(top: Radius.circular(16.0)),
               ),
               child: Center(
                 child: Container(
@@ -93,41 +89,23 @@ class _DiaryScreenState extends State<DiaryScreen>
             ),
           ),
           Expanded(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Text('작성된 일기가 없습니다.\n새 일기를 작성해주세요.'),
-                const SizedBox(
-                  height: 16.0,
-                ),
-                IconButton(
-                  onPressed: () {
-                    context.goNamed(
-                      DiaryEditScreen.routeName,
-                      pathParameters: {'date': _selectedDay.toString()},
-                    );
-                  },
-                  icon: Container(
-                    width: 50,
-                    height: 50,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: PRIMARY_COLOR,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.grey.withOpacity(0.7),
-                          blurRadius: 3.0,
-                          offset: const Offset(0, 3),
-                        )
-                      ],
-                    ),
-                    child: const Icon(
-                      Icons.edit,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-              ],
+            child: StreamBuilder(
+              stream: localDatabase.watchDiaryInfos(_selectedDay),
+              builder: (context, snapshot) {
+                if (!snapshot.hasData) {
+                  return const Center(
+                    child: CircularProgressIndicator(),
+                  );
+                } else if (snapshot.data!.isEmpty) {
+                  return CreateNewDiaryButton(selectedDay: _selectedDay);
+                } else {
+                  final diaryInfo = snapshot.data!.first;
+                  return DiaryScrollView(
+                    selectedDay: _selectedDay,
+                    diaryInfo: diaryInfo,
+                  );
+                }
+              },
             ),
           ),
         ],

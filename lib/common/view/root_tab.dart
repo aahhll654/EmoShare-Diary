@@ -5,6 +5,8 @@ import 'package:emoshare_diary/diary/view/diary_screen.dart';
 import 'package:emoshare_diary/menu/view/menu_screen.dart';
 import 'package:emoshare_diary/summary/view/summary_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
 
 class RootTab extends StatefulWidget {
   static String get routeName => 'home';
@@ -44,47 +46,83 @@ class _RootTabState extends State<RootTab> with SingleTickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
-    return DefaultLayout(
-      backgroundColor: BACKGROUND_COLOR,
-      bottomNavigationBar: BottomNavigationBar(
-        showSelectedLabels: false,
-        showUnselectedLabels: false,
-        fixedColor: PRIMARY_COLOR,
-        selectedFontSize: 12,
-        unselectedFontSize: 12,
-        type: BottomNavigationBarType.fixed,
-        onTap: (int index) {
-          controller.animateTo(index);
-        },
-        currentIndex: index,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.menu_outlined),
-            label: '',
+    return PopScope(
+      canPop: false,
+      onPopInvoked: (_) {
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            surfaceTintColor: BACKGROUND_COLOR,
+            backgroundColor: BACKGROUND_COLOR,
+            content: const Text(
+              '앱을 종료하시겠습니까?',
+              style: TextStyle(fontSize: 16.0),
+            ),
+            actions: [
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  foregroundColor: Colors.red,
+                ),
+                onPressed: () {
+                  SystemNavigator.pop();
+                },
+                child: const Text('종료'),
+              ),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  foregroundColor: Colors.grey.shade700,
+                ),
+                onPressed: () {
+                  context.pop();
+                },
+                child: const Text('취소'),
+              ),
+            ],
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home_outlined),
-            label: '',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.summarize_outlined),
-            label: '',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.mood_outlined),
-            label: '',
-          ),
-        ],
-      ),
-      child: TabBarView(
-        physics: const NeverScrollableScrollPhysics(),
-        controller: controller,
-        children: const [
-          MenuScreen(),
-          DiaryScreen(),
-          SummaryScreen(),
-          ConcernScreen(),
-        ],
+        );
+      },
+      child: DefaultLayout(
+        backgroundColor: BACKGROUND_COLOR,
+        bottomNavigationBar: BottomNavigationBar(
+          showSelectedLabels: false,
+          showUnselectedLabels: false,
+          fixedColor: PRIMARY_COLOR,
+          selectedFontSize: 12,
+          unselectedFontSize: 12,
+          type: BottomNavigationBarType.fixed,
+          onTap: (int index) {
+            controller.animateTo(index);
+          },
+          currentIndex: index,
+          items: const [
+            BottomNavigationBarItem(
+              icon: Icon(Icons.menu_outlined),
+              label: '',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.home_outlined),
+              label: '',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.summarize_outlined),
+              label: '',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.mood_outlined),
+              label: '',
+            ),
+          ],
+        ),
+        child: TabBarView(
+          physics: const NeverScrollableScrollPhysics(),
+          controller: controller,
+          children: const [
+            MenuScreen(),
+            DiaryScreen(),
+            SummaryScreen(),
+            ConcernScreen(),
+          ],
+        ),
       ),
     );
   }
