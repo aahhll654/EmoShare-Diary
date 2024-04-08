@@ -19,16 +19,29 @@ final localDatabaseProvider = Provider<LocalDatabase>((ref) => LocalDatabase());
 class LocalDatabase extends _$LocalDatabase {
   LocalDatabase() : super(_openConnection());
 
-  Stream<List<DiaryInfo>> watchDiaryInfos(DateTime date) =>
-      (select(diaryInfos)..where((tbl) => tbl.date.equals(date))).watch();
+  Stream<DiaryInfo?> watchDiaryInfos(DateTime date) =>
+      (select(diaryInfos)..where((tbl) => tbl.date.equals(date)))
+          .watchSingleOrNull();
+
+  Stream<List<Map<String, dynamic>>> watchEmotionInfos(DateTime date) =>
+      (selectOnly(diaryInfos, distinct: true)
+            ..addColumns([diaryInfos.date, diaryInfos.emotion])
+            ..where(diaryInfos.date.year.equals(date.year))
+            ..where(diaryInfos.date.month.equals(date.month)))
+          .map((row) => {
+                'date': row.read(diaryInfos.date),
+                'emotion': row.read(diaryInfos.emotion),
+              })
+          .watch();
 
   Future<int> createDiaryInfo(DiaryInfosCompanion data) =>
       into(diaryInfos).insert(data);
 
-  Future<int> updateDiaryInfo(
-          DateTime date, String changedContent, DateTime updatedAt) =>
+  Future<int> updateDiaryInfo(DateTime date, int changedEmotion,
+          String changedContent, DateTime updatedAt) =>
       (update(diaryInfos)..where((tbl) => tbl.date.equals(date))).write(
         DiaryInfosCompanion(
+          emotion: Value(changedEmotion),
           content: Value(changedContent),
           updatedAt: Value(updatedAt),
         ),

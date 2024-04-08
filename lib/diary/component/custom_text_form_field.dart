@@ -51,9 +51,6 @@ class CustomTextFormField extends StatelessWidget {
       autofocus: autofocus,
       focusNode: focusNode,
       onChanged: onChanged,
-      onTapOutside: (_) {
-        FocusManager.instance.primaryFocus?.unfocus();
-      },
       controller: textEditingController,
       style: const TextStyle(decorationThickness: 0),
       cursorColor: PRIMARY_COLOR,
