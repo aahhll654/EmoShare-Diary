@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:emoshare_diary/common/const/colors.dart';
 import 'package:emoshare_diary/common/database/drift_database.dart';
 import 'package:emoshare_diary/diary/component/create_new_diary_button.dart';
@@ -23,15 +25,29 @@ class _DiaryScreenState extends ConsumerState<DiaryScreen>
   );
   DateTime _focusedDay = DateTime.now();
   CalendarFormat _calendarFormat = CalendarFormat.month;
-  bool lock = false;
+  Icon arrowIcon = const Icon(Icons.keyboard_arrow_up);
+  List<Map<String, dynamic>> monthlyEmotionList = [];
+  late LocalDatabase localDatabase;
+  late StreamSubscription monthlyEmotionListSubscription;
 
   @override
   bool get wantKeepAlive => true;
 
   @override
+  void initState() {
+    super.initState();
+    localDatabase = ref.read(localDatabaseProvider);
+    monthlyEmotionListSubscription =
+        localDatabase.watchEmotionInfos(_selectedDay).listen((data) {
+      setState(() {
+        monthlyEmotionList = data;
+      });
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     super.build(context);
-    final localDatabase = ref.watch(localDatabaseProvider);
 
     return SafeArea(
       child: Column(
@@ -40,51 +56,55 @@ class _DiaryScreenState extends ConsumerState<DiaryScreen>
             selectedDay: _selectedDay,
             focusedDay: _focusedDay,
             calendarFormat: _calendarFormat,
+            monthlyEmotionList: monthlyEmotionList,
             onDaySelected: (selectedDay, focusedDay) {
               setState(() {
                 _selectedDay = selectedDay;
                 _focusedDay = focusedDay;
               });
             },
+            onPageChanged: (focusedDay) {
+              if (focusedDay.year == _selectedDay.year &&
+                  focusedDay.month == _selectedDay.month) {
+                _focusedDay = _selectedDay;
+              } else {
+                _focusedDay = focusedDay;
+              }
+
+              monthlyEmotionListSubscription.cancel();
+              monthlyEmotionListSubscription =
+                  localDatabase.watchEmotionInfos(focusedDay).listen((data) {
+                setState(() {
+                  monthlyEmotionList = data;
+                });
+              });
+            },
           ),
-          GestureDetector(
-            onVerticalDragUpdate: (details) {
-              if (lock) {
-                return;
-              }
-              lock = true;
-              if (details.delta.dy < 0 &&
-                  _calendarFormat == CalendarFormat.month) {
-                setState(() {
-                  _calendarFormat = CalendarFormat.week;
-                });
-              } else if (details.delta.dy > 0 &&
-                  _calendarFormat == CalendarFormat.week) {
-                setState(() {
-                  _calendarFormat = CalendarFormat.month;
-                });
-              }
-            },
-            onVerticalDragEnd: (_) {
-              lock = false;
-            },
-            child: Container(
-              clipBehavior: Clip.hardEdge,
-              width: double.infinity,
-              height: 20,
-              decoration: const BoxDecoration(
-                color: PRIMARY_COLOR,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(16.0)),
-              ),
+          const SizedBox(height: 8.0),
+          Container(
+            clipBehavior: Clip.hardEdge,
+            width: double.infinity,
+            height: 20,
+            decoration: const BoxDecoration(
+              color: PRIMARY_COLOR,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(16.0)),
+            ),
+            child: GestureDetector(
+              onTap: () {
+                if (_calendarFormat == CalendarFormat.month) {
+                  setState(() {
+                    _calendarFormat = CalendarFormat.week;
+                    arrowIcon = const Icon(Icons.keyboard_arrow_down);
+                  });
+                } else if (_calendarFormat == CalendarFormat.week) {
+                  setState(() {
+                    _calendarFormat = CalendarFormat.month;
+                    arrowIcon = const Icon(Icons.keyboard_arrow_up);
+                  });
+                }
+              },
               child: Center(
-                child: Container(
-                  width: 50,
-                  height: 5,
-                  decoration: BoxDecoration(
-                    color: Colors.grey,
-                    borderRadius: BorderRadius.circular(16.0),
-                  ),
-                ),
+                child: arrowIcon,
               ),
             ),
           ),
@@ -92,14 +112,14 @@ class _DiaryScreenState extends ConsumerState<DiaryScreen>
             child: StreamBuilder(
               stream: localDatabase.watchDiaryInfos(_selectedDay),
               builder: (context, snapshot) {
-                if (!snapshot.hasData) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(
                     child: CircularProgressIndicator(),
                   );
-                } else if (snapshot.data!.isEmpty) {
+                } else if (snapshot.data == null) {
                   return CreateNewDiaryButton(selectedDay: _selectedDay);
                 } else {
-                  final diaryInfo = snapshot.data!.first;
+                  final diaryInfo = snapshot.data!;
                   return DiaryScrollView(
                     selectedDay: _selectedDay,
                     diaryInfo: diaryInfo,

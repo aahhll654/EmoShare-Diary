@@ -26,6 +26,12 @@ class $DiaryInfosTable extends DiaryInfos
   late final GeneratedColumn<String> content = GeneratedColumn<String>(
       'content', aliasedName, false,
       type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _emotionMeta =
+      const VerificationMeta('emotion');
+  @override
+  late final GeneratedColumn<int> emotion = GeneratedColumn<int>(
+      'emotion', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
   static const VerificationMeta _createdAtMeta =
       const VerificationMeta('createdAt');
   @override
@@ -40,7 +46,7 @@ class $DiaryInfosTable extends DiaryInfos
       type: DriftSqlType.dateTime, requiredDuringInsert: true);
   @override
   List<GeneratedColumn> get $columns =>
-      [date, summary, content, createdAt, updatedAt];
+      [date, summary, content, emotion, createdAt, updatedAt];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -69,6 +75,12 @@ class $DiaryInfosTable extends DiaryInfos
     } else if (isInserting) {
       context.missing(_contentMeta);
     }
+    if (data.containsKey('emotion')) {
+      context.handle(_emotionMeta,
+          emotion.isAcceptableOrUnknown(data['emotion']!, _emotionMeta));
+    } else if (isInserting) {
+      context.missing(_emotionMeta);
+    }
     if (data.containsKey('created_at')) {
       context.handle(_createdAtMeta,
           createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
@@ -96,6 +108,8 @@ class $DiaryInfosTable extends DiaryInfos
           .read(DriftSqlType.string, data['${effectivePrefix}summary'])!,
       content: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}content'])!,
+      emotion: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}emotion'])!,
       createdAt: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
       updatedAt: attachedDatabase.typeMapping
@@ -113,12 +127,14 @@ class DiaryInfo extends DataClass implements Insertable<DiaryInfo> {
   final DateTime date;
   final String summary;
   final String content;
+  final int emotion;
   final DateTime createdAt;
   final DateTime updatedAt;
   const DiaryInfo(
       {required this.date,
       required this.summary,
       required this.content,
+      required this.emotion,
       required this.createdAt,
       required this.updatedAt});
   @override
@@ -127,6 +143,7 @@ class DiaryInfo extends DataClass implements Insertable<DiaryInfo> {
     map['date'] = Variable<DateTime>(date);
     map['summary'] = Variable<String>(summary);
     map['content'] = Variable<String>(content);
+    map['emotion'] = Variable<int>(emotion);
     map['created_at'] = Variable<DateTime>(createdAt);
     map['updated_at'] = Variable<DateTime>(updatedAt);
     return map;
@@ -137,6 +154,7 @@ class DiaryInfo extends DataClass implements Insertable<DiaryInfo> {
       date: Value(date),
       summary: Value(summary),
       content: Value(content),
+      emotion: Value(emotion),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
     );
@@ -149,6 +167,7 @@ class DiaryInfo extends DataClass implements Insertable<DiaryInfo> {
       date: serializer.fromJson<DateTime>(json['date']),
       summary: serializer.fromJson<String>(json['summary']),
       content: serializer.fromJson<String>(json['content']),
+      emotion: serializer.fromJson<int>(json['emotion']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
     );
@@ -160,6 +179,7 @@ class DiaryInfo extends DataClass implements Insertable<DiaryInfo> {
       'date': serializer.toJson<DateTime>(date),
       'summary': serializer.toJson<String>(summary),
       'content': serializer.toJson<String>(content),
+      'emotion': serializer.toJson<int>(emotion),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
     };
@@ -169,12 +189,14 @@ class DiaryInfo extends DataClass implements Insertable<DiaryInfo> {
           {DateTime? date,
           String? summary,
           String? content,
+          int? emotion,
           DateTime? createdAt,
           DateTime? updatedAt}) =>
       DiaryInfo(
         date: date ?? this.date,
         summary: summary ?? this.summary,
         content: content ?? this.content,
+        emotion: emotion ?? this.emotion,
         createdAt: createdAt ?? this.createdAt,
         updatedAt: updatedAt ?? this.updatedAt,
       );
@@ -184,6 +206,7 @@ class DiaryInfo extends DataClass implements Insertable<DiaryInfo> {
           ..write('date: $date, ')
           ..write('summary: $summary, ')
           ..write('content: $content, ')
+          ..write('emotion: $emotion, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt')
           ..write(')'))
@@ -191,7 +214,8 @@ class DiaryInfo extends DataClass implements Insertable<DiaryInfo> {
   }
 
   @override
-  int get hashCode => Object.hash(date, summary, content, createdAt, updatedAt);
+  int get hashCode =>
+      Object.hash(date, summary, content, emotion, createdAt, updatedAt);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -199,6 +223,7 @@ class DiaryInfo extends DataClass implements Insertable<DiaryInfo> {
           other.date == this.date &&
           other.summary == this.summary &&
           other.content == this.content &&
+          other.emotion == this.emotion &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt);
 }
@@ -207,6 +232,7 @@ class DiaryInfosCompanion extends UpdateCompanion<DiaryInfo> {
   final Value<DateTime> date;
   final Value<String> summary;
   final Value<String> content;
+  final Value<int> emotion;
   final Value<DateTime> createdAt;
   final Value<DateTime> updatedAt;
   final Value<int> rowid;
@@ -214,6 +240,7 @@ class DiaryInfosCompanion extends UpdateCompanion<DiaryInfo> {
     this.date = const Value.absent(),
     this.summary = const Value.absent(),
     this.content = const Value.absent(),
+    this.emotion = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -222,18 +249,21 @@ class DiaryInfosCompanion extends UpdateCompanion<DiaryInfo> {
     required DateTime date,
     required String summary,
     required String content,
+    required int emotion,
     required DateTime createdAt,
     required DateTime updatedAt,
     this.rowid = const Value.absent(),
   })  : date = Value(date),
         summary = Value(summary),
         content = Value(content),
+        emotion = Value(emotion),
         createdAt = Value(createdAt),
         updatedAt = Value(updatedAt);
   static Insertable<DiaryInfo> custom({
     Expression<DateTime>? date,
     Expression<String>? summary,
     Expression<String>? content,
+    Expression<int>? emotion,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
     Expression<int>? rowid,
@@ -242,6 +272,7 @@ class DiaryInfosCompanion extends UpdateCompanion<DiaryInfo> {
       if (date != null) 'date': date,
       if (summary != null) 'summary': summary,
       if (content != null) 'content': content,
+      if (emotion != null) 'emotion': emotion,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
       if (rowid != null) 'rowid': rowid,
@@ -252,6 +283,7 @@ class DiaryInfosCompanion extends UpdateCompanion<DiaryInfo> {
       {Value<DateTime>? date,
       Value<String>? summary,
       Value<String>? content,
+      Value<int>? emotion,
       Value<DateTime>? createdAt,
       Value<DateTime>? updatedAt,
       Value<int>? rowid}) {
@@ -259,6 +291,7 @@ class DiaryInfosCompanion extends UpdateCompanion<DiaryInfo> {
       date: date ?? this.date,
       summary: summary ?? this.summary,
       content: content ?? this.content,
+      emotion: emotion ?? this.emotion,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       rowid: rowid ?? this.rowid,
@@ -276,6 +309,9 @@ class DiaryInfosCompanion extends UpdateCompanion<DiaryInfo> {
     }
     if (content.present) {
       map['content'] = Variable<String>(content.value);
+    }
+    if (emotion.present) {
+      map['emotion'] = Variable<int>(emotion.value);
     }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
@@ -295,6 +331,7 @@ class DiaryInfosCompanion extends UpdateCompanion<DiaryInfo> {
           ..write('date: $date, ')
           ..write('summary: $summary, ')
           ..write('content: $content, ')
+          ..write('emotion: $emotion, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('rowid: $rowid')

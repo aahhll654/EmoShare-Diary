@@ -42,14 +42,19 @@ class DefaultLayout extends StatelessWidget {
   Widget build(BuildContext context) {
     SystemChrome.setPreferredOrientations([deviceOrientation]);
 
-    return Scaffold(
-      backgroundColor: backgroundColor ?? BACKGROUND_COLOR,
-      appBar: renderAppBar(),
-      drawer: drawer,
-      drawerEnableOpenDragGesture: drawerEnableOpenDragGesture,
-      body: child,
-      bottomNavigationBar: bottomNavigationBar,
-      floatingActionButton: floatingActionButton,
+    return GestureDetector(
+      onTap: () {
+        FocusManager.instance.primaryFocus?.unfocus();
+      },
+      child: Scaffold(
+        backgroundColor: backgroundColor ?? BACKGROUND_COLOR,
+        appBar: renderAppBar(),
+        drawer: drawer,
+        drawerEnableOpenDragGesture: drawerEnableOpenDragGesture,
+        body: child,
+        bottomNavigationBar: bottomNavigationBar,
+        floatingActionButton: floatingActionButton,
+      ),
     );
   }
 

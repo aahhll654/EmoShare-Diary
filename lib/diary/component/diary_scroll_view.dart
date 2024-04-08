@@ -1,4 +1,5 @@
 import 'package:emoshare_diary/common/const/colors.dart';
+import 'package:emoshare_diary/common/const/mood.dart';
 import 'package:emoshare_diary/common/database/drift_database.dart';
 import 'package:emoshare_diary/diary/view/diary_edit_screen.dart';
 import 'package:flutter/material.dart';
@@ -19,6 +20,7 @@ class DiaryScrollView extends ConsumerWidget {
         SliverAppBar(
           pinned: true,
           scrolledUnderElevation: 0.0,
+          leading: Mood.mood(diaryInfo.emotion, 32.0),
           title: Text(
               '${selectedDay.year}/${selectedDay.month}/${selectedDay.day}'),
           centerTitle: true,

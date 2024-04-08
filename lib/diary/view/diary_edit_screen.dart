@@ -1,8 +1,8 @@
-import 'package:drift/drift.dart' as d;
 import 'package:emoshare_diary/common/const/colors.dart';
 import 'package:emoshare_diary/common/database/drift_database.dart';
 import 'package:emoshare_diary/common/layout/default_layout.dart';
 import 'package:emoshare_diary/diary/component/custom_text_form_field.dart';
+import 'package:emoshare_diary/diary/component/emotion_alert_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -28,6 +28,7 @@ class _DiaryEditScreenState extends ConsumerState<DiaryEditScreen> {
   bool isLoading = true;
   bool isCreated = false;
   String content = '';
+  DiaryInfo? diaryInfo;
 
   KeyboardActionsConfig _buildKeyboardActionsConfig(BuildContext context) {
     return KeyboardActionsConfig(
@@ -89,26 +90,17 @@ class _DiaryEditScreenState extends ConsumerState<DiaryEditScreen> {
               if (!isLoading) {
                 formKey.currentState!.save();
 
-                if (!isCreated) {
-                  await localDatabase.createDiaryInfo(
-                    DiaryInfosCompanion(
-                      date: d.Value(widget.date),
-                      content: d.Value(content),
-                      summary: const d.Value(''),
-                      createdAt: d.Value(DateTime.now()),
-                      updatedAt: d.Value(DateTime.now()),
-                    ),
-                  );
-                } else {
-                  await localDatabase.updateDiaryInfo(
-                    widget.date,
-                    content,
-                    DateTime.now(),
-                  );
-                }
+                showDialog(
+                  context: context,
+                  builder: (context) => EmotionAlertDialog(
+                    isCreated: isCreated,
+                    localDatabase: localDatabase,
+                    date: widget.date,
+                    content: content,
+                    emotion: diaryInfo?.emotion ?? 2,
+                  ),
+                );
               }
-
-              context.pop();
             },
             child: const Text(
               '저장',
@@ -121,16 +113,15 @@ class _DiaryEditScreenState extends ConsumerState<DiaryEditScreen> {
         child: FutureBuilder(
           future: localDatabase.watchDiaryInfos(widget.date).first,
           builder: (context, snapshot) {
-            if (!snapshot.hasData) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
               return const Center(
                 child: CircularProgressIndicator(),
               );
             } else {
-              if (snapshot.data!.isEmpty) {
-              } else {
+              if (snapshot.data != null) {
                 isCreated = true;
-                final diaryInfo = snapshot.data!.first;
-                content = diaryInfo.content;
+                diaryInfo = snapshot.data!;
+                content = diaryInfo!.content;
               }
 
               isLoading = false;
@@ -152,6 +143,7 @@ class _DiaryEditScreenState extends ConsumerState<DiaryEditScreen> {
                               content = '';
                             }
                           },
+                          hintText: '일기를 작성해주세요.',
                           initialValue: content,
                           maxLines: null,
                           autofocus: !isCreated,
