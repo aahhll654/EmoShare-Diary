@@ -18,6 +18,7 @@ class DefaultLayout extends StatelessWidget {
   final DeviceOrientation deviceOrientation;
   final PreferredSizeWidget? bottom;
   final List<Widget>? actions;
+  final FloatingActionButtonLocation? floatingActionButtonLocation;
 
   const DefaultLayout({
     required this.child,
@@ -35,6 +36,7 @@ class DefaultLayout extends StatelessWidget {
     this.drawerEnableOpenDragGesture = false,
     this.deviceOrientation = DeviceOrientation.portraitUp,
     this.actions,
+    this.floatingActionButtonLocation,
     super.key,
   });
 
@@ -54,6 +56,7 @@ class DefaultLayout extends StatelessWidget {
         body: child,
         bottomNavigationBar: bottomNavigationBar,
         floatingActionButton: floatingActionButton,
+        floatingActionButtonLocation: floatingActionButtonLocation,
       ),
     );
   }

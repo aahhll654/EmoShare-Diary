@@ -3,6 +3,7 @@ import 'package:emoshare_diary/common/database/drift_database.dart';
 import 'package:emoshare_diary/common/layout/default_layout.dart';
 import 'package:emoshare_diary/diary/component/custom_text_form_field.dart';
 import 'package:emoshare_diary/diary/component/emotion_alert_dialog.dart';
+import 'package:emoshare_diary/diary/component/recording_box.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -29,6 +30,7 @@ class _DiaryEditScreenState extends ConsumerState<DiaryEditScreen> {
   bool isCreated = false;
   String content = '';
   DiaryInfo? diaryInfo;
+  bool autofocus = true;
 
   KeyboardActionsConfig _buildKeyboardActionsConfig(BuildContext context) {
     return KeyboardActionsConfig(
@@ -37,6 +39,87 @@ class _DiaryEditScreenState extends ConsumerState<DiaryEditScreen> {
       actions: [
         KeyboardActionsItem(
           focusNode: _diaryFocus,
+          displayArrows: false,
+          displayActionBar: false,
+          footerBuilder: (_) => PreferredSize(
+            preferredSize: const Size.fromHeight(50),
+            child: Row(
+              children: [
+                const Flexible(
+                  flex: 1,
+                  fit: FlexFit.tight,
+                  child: SizedBox(),
+                ),
+                Flexible(
+                  flex: 1,
+                  fit: FlexFit.tight,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(
+                          decoration: const BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.white,
+                          ),
+                          child: IconButton(
+                            onPressed: () async {
+                              _diaryFocus.unfocus();
+                              showModalBottomSheet(
+                                shape: const RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.only(
+                                    topLeft: Radius.circular(16.0),
+                                    topRight: Radius.circular(16.0),
+                                  ),
+                                ),
+                                isDismissible: false,
+                                constraints: BoxConstraints(
+                                  maxHeight:
+                                      MediaQuery.of(context).size.height * 0.3,
+                                  minHeight:
+                                      MediaQuery.of(context).size.height * 0.3,
+                                  maxWidth: double.infinity,
+                                  minWidth: double.infinity,
+                                ),
+                                enableDrag: false,
+                                context: context,
+                                builder: (context) {
+                                  return const RecordingBox();
+                                },
+                              );
+                            },
+                            icon: const Icon(
+                              Icons.mic,
+                              color: PRIMARY_COLOR,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                Flexible(
+                  flex: 1,
+                  fit: FlexFit.tight,
+                  child: Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton(
+                      onPressed: () {
+                        _diaryFocus.unfocus();
+                      },
+                      child: const Text(
+                        '완료',
+                        style: TextStyle(
+                          color: Colors.black,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ],
     );
@@ -49,6 +132,7 @@ class _DiaryEditScreenState extends ConsumerState<DiaryEditScreen> {
     return PopScope(
       canPop: false,
       onPopInvoked: (_) {
+        autofocus = false;
         showDialog(
           context: context,
           builder: (context) => AlertDialog(
@@ -120,6 +204,7 @@ class _DiaryEditScreenState extends ConsumerState<DiaryEditScreen> {
             } else {
               if (snapshot.data != null) {
                 isCreated = true;
+                autofocus = false;
                 diaryInfo = snapshot.data!;
                 content = diaryInfo!.content;
               }
@@ -146,7 +231,7 @@ class _DiaryEditScreenState extends ConsumerState<DiaryEditScreen> {
                           hintText: '일기를 작성해주세요.',
                           initialValue: content,
                           maxLines: null,
-                          autofocus: !isCreated,
+                          autofocus: autofocus,
                           focusNode: _diaryFocus,
                         ),
                       ],
