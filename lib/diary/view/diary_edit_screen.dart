@@ -66,7 +66,7 @@ class _DiaryEditScreenState extends ConsumerState<DiaryEditScreen> {
                           child: IconButton(
                             onPressed: () async {
                               _diaryFocus.unfocus();
-                              showModalBottomSheet(
+                              final String? text = await showModalBottomSheet(
                                 shape: const RoundedRectangleBorder(
                                   borderRadius: BorderRadius.only(
                                     topLeft: Radius.circular(16.0),
@@ -88,6 +88,16 @@ class _DiaryEditScreenState extends ConsumerState<DiaryEditScreen> {
                                   return const RecordingBox();
                                 },
                               );
+
+                              if (text != null) {
+                                formKey.currentState!.save();
+                                setState(() {
+                                  if (content != '') {
+                                    content += ' ';
+                                  }
+                                  content += text;
+                                });
+                              }
                             },
                             icon: const Icon(
                               Icons.mic,
