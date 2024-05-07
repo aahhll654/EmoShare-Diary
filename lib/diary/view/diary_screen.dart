@@ -46,6 +46,12 @@ class _DiaryScreenState extends ConsumerState<DiaryScreen>
   }
 
   @override
+  void dispose() {
+    monthlyEmotionListSubscription.cancel();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     super.build(context);
 

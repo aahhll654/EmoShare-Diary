@@ -10,6 +10,7 @@ class EmotionAlertDialog extends StatefulWidget {
   final LocalDatabase localDatabase;
   final DateTime date;
   final String content;
+  final String summary;
   final int emotion;
 
   const EmotionAlertDialog({
@@ -18,6 +19,7 @@ class EmotionAlertDialog extends StatefulWidget {
     required this.localDatabase,
     required this.date,
     required this.content,
+    required this.summary,
     required this.emotion,
   });
 
@@ -86,7 +88,7 @@ class _EmotionAlertDialogState extends State<EmotionAlertDialog> {
                 DiaryInfosCompanion(
                   date: d.Value(widget.date),
                   content: d.Value(widget.content),
-                  summary: const d.Value(''),
+                  summary: d.Value(widget.summary),
                   emotion: d.Value(emotion),
                   createdAt: d.Value(DateTime.now()),
                   updatedAt: d.Value(DateTime.now()),
@@ -98,6 +100,7 @@ class _EmotionAlertDialogState extends State<EmotionAlertDialog> {
                 widget.date,
                 emotion,
                 widget.content,
+                widget.summary,
                 DateTime.now(),
               );
             }

@@ -23,6 +23,13 @@ class LocalDatabase extends _$LocalDatabase {
       (select(diaryInfos)..where((tbl) => tbl.date.equals(date)))
           .watchSingleOrNull();
 
+  Stream<List<DiaryInfo>> watchDiaryInfosByMonth(DateTime date) =>
+      (select(diaryInfos)
+            ..where((tbl) => tbl.date.year.equals(date.year))
+            ..where((tbl) => tbl.date.month.equals(date.month))
+            ..orderBy([(tbl) => OrderingTerm.desc(tbl.date)]))
+          .watch();
+
   Stream<List<Map<String, dynamic>>> watchEmotionInfos(DateTime date) =>
       (selectOnly(diaryInfos, distinct: true)
             ..addColumns([diaryInfos.date, diaryInfos.emotion])
@@ -38,11 +45,12 @@ class LocalDatabase extends _$LocalDatabase {
       into(diaryInfos).insert(data);
 
   Future<int> updateDiaryInfo(DateTime date, int changedEmotion,
-          String changedContent, DateTime updatedAt) =>
+          String changedContent, String changedSummary, DateTime updatedAt) =>
       (update(diaryInfos)..where((tbl) => tbl.date.equals(date))).write(
         DiaryInfosCompanion(
           emotion: Value(changedEmotion),
           content: Value(changedContent),
+          summary: Value(changedSummary),
           updatedAt: Value(updatedAt),
         ),
       );

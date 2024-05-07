@@ -9,9 +9,14 @@ import 'package:go_router/go_router.dart';
 class DiaryScrollView extends ConsumerWidget {
   final DateTime selectedDay;
   final DiaryInfo diaryInfo;
+  final bool isDetail;
 
-  const DiaryScrollView(
-      {super.key, required this.selectedDay, required this.diaryInfo});
+  const DiaryScrollView({
+    super.key,
+    required this.selectedDay,
+    required this.diaryInfo,
+    this.isDetail = false,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -20,11 +25,23 @@ class DiaryScrollView extends ConsumerWidget {
         SliverAppBar(
           pinned: true,
           scrolledUnderElevation: 0.0,
-          leading: Mood.mood(diaryInfo.emotion, 32.0),
-          title: Text(
-              '${selectedDay.year}/${selectedDay.month}/${selectedDay.day}'),
+          leading: Row(
+            children: [
+              const SizedBox(width: 8.0),
+              if (isDetail) const BackButton(),
+              Mood.mood(diaryInfo.emotion, 32.0),
+            ],
+          ),
+          leadingWidth: 100.0,
+          title: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                  '${selectedDay.year}/${selectedDay.month}/${selectedDay.day}'),
+            ],
+          ),
           centerTitle: true,
-          backgroundColor: Colors.grey,
+          backgroundColor: isDetail ? BACKGROUND_COLOR : Colors.grey,
           actions: [
             IconButton(
               onPressed: () {
@@ -47,6 +64,9 @@ class DiaryScrollView extends ConsumerWidget {
                               .read(localDatabaseProvider)
                               .removeDiaryInfo(selectedDay);
                           context.pop();
+                          if (isDetail) {
+                            context.pop();
+                          }
                         },
                         child: const Text('삭제'),
                       ),
@@ -81,6 +101,29 @@ class DiaryScrollView extends ConsumerWidget {
           ],
           toolbarHeight: 42.0,
         ),
+        if (diaryInfo.summary.isNotEmpty)
+          SliverPadding(
+            padding: const EdgeInsets.all(16.0),
+            sliver: SliverToBoxAdapter(
+              child: SelectionArea(
+                child: Text(
+                  diaryInfo.summary,
+                  style: const TextStyle(
+                    fontSize: 18.0,
+                    fontWeight: FontWeight.w600,
+                    height: 1.6,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        if (diaryInfo.summary.isNotEmpty)
+          SliverToBoxAdapter(
+            child: Container(
+              height: 2.0,
+              color: PRIMARY_COLOR,
+            ),
+          ),
         SliverPadding(
           padding: const EdgeInsets.all(16.0),
           sliver: SliverToBoxAdapter(

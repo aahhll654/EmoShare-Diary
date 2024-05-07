@@ -1,5 +1,6 @@
 import 'package:emoshare_diary/common/view/root_tab.dart';
 import 'package:emoshare_diary/common/view/splash_screen.dart';
+import 'package:emoshare_diary/diary/view/diary_detail_screen.dart';
 import 'package:emoshare_diary/diary/view/diary_edit_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -28,6 +29,13 @@ class AuthProvider extends ChangeNotifier {
               path: 'diaryedit/:date',
               name: DiaryEditScreen.routeName,
               builder: (_, state) => DiaryEditScreen(
+                date: state.pathParameters['date']!,
+              ),
+            ),
+            GoRoute(
+              path: 'diarydetail/:date',
+              name: DiaryDetailScreen.routeName,
+              builder: (_, state) => DiaryDetailScreen(
                 date: state.pathParameters['date']!,
               ),
             ),

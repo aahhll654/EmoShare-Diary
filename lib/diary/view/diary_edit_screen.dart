@@ -26,9 +26,11 @@ class DiaryEditScreen extends ConsumerStatefulWidget {
 class _DiaryEditScreenState extends ConsumerState<DiaryEditScreen> {
   final formKey = GlobalKey<FormState>();
   final _diaryFocus = FocusNode();
+  final _summaryFocus = FocusNode();
   bool isLoading = true;
   bool isCreated = false;
   String content = '';
+  String summary = '';
   DiaryInfo? diaryInfo;
   bool autofocus = true;
 
@@ -37,101 +39,112 @@ class _DiaryEditScreenState extends ConsumerState<DiaryEditScreen> {
       keyboardActionsPlatform: KeyboardActionsPlatform.ALL,
       keyboardBarColor: PRIMARY_COLOR,
       actions: [
-        KeyboardActionsItem(
-          focusNode: _diaryFocus,
-          displayArrows: false,
-          displayActionBar: false,
-          footerBuilder: (_) => PreferredSize(
-            preferredSize: const Size.fromHeight(50),
-            child: Row(
-              children: [
-                const Flexible(
-                  flex: 1,
-                  fit: FlexFit.tight,
-                  child: SizedBox(),
-                ),
-                Flexible(
-                  flex: 1,
-                  fit: FlexFit.tight,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 4.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Container(
-                          decoration: const BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: Colors.white,
-                          ),
-                          child: IconButton(
-                            onPressed: () async {
-                              _diaryFocus.unfocus();
-                              final String? text = await showModalBottomSheet(
-                                shape: const RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.only(
-                                    topLeft: Radius.circular(16.0),
-                                    topRight: Radius.circular(16.0),
-                                  ),
-                                ),
-                                isDismissible: false,
-                                constraints: BoxConstraints(
-                                  maxHeight:
-                                      MediaQuery.of(context).size.height * 0.3,
-                                  minHeight:
-                                      MediaQuery.of(context).size.height * 0.3,
-                                  maxWidth: double.infinity,
-                                  minWidth: double.infinity,
-                                ),
-                                enableDrag: false,
-                                context: context,
-                                builder: (context) {
-                                  return const RecordingBox();
-                                },
-                              );
+        _buildKeyboardActionsItem(_diaryFocus),
+        _buildKeyboardActionsItem(_summaryFocus),
+      ],
+    );
+  }
 
-                              if (text != null) {
-                                formKey.currentState!.save();
-                                setState(() {
-                                  if (content != '') {
-                                    content += ' ';
-                                  }
-                                  content += text;
-                                });
-                              }
-                            },
-                            icon: const Icon(
-                              Icons.mic,
-                              color: PRIMARY_COLOR,
+  KeyboardActionsItem _buildKeyboardActionsItem(FocusNode focusNode) {
+    return KeyboardActionsItem(
+      focusNode: focusNode,
+      displayArrows: false,
+      displayActionBar: false,
+      footerBuilder: (_) => PreferredSize(
+        preferredSize: const Size.fromHeight(50),
+        child: Row(
+          children: [
+            const Flexible(
+              flex: 1,
+              fit: FlexFit.tight,
+              child: SizedBox(),
+            ),
+            Flexible(
+              flex: 1,
+              fit: FlexFit.tight,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      decoration: const BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.white,
+                      ),
+                      child: IconButton(
+                        onPressed: () async {
+                          _diaryFocus.unfocus();
+                          final String? text = await showModalBottomSheet(
+                            shape: const RoundedRectangleBorder(
+                              borderRadius: BorderRadius.only(
+                                topLeft: Radius.circular(16.0),
+                                topRight: Radius.circular(16.0),
+                              ),
                             ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                Flexible(
-                  flex: 1,
-                  fit: FlexFit.tight,
-                  child: Align(
-                    alignment: Alignment.centerRight,
-                    child: TextButton(
-                      onPressed: () {
-                        _diaryFocus.unfocus();
-                      },
-                      child: const Text(
-                        '완료',
-                        style: TextStyle(
-                          color: Colors.black,
+                            isDismissible: false,
+                            constraints: BoxConstraints(
+                              maxHeight:
+                                  MediaQuery.of(context).size.height * 0.3,
+                              minHeight:
+                                  MediaQuery.of(context).size.height * 0.3,
+                              maxWidth: double.infinity,
+                              minWidth: double.infinity,
+                            ),
+                            enableDrag: false,
+                            context: context,
+                            builder: (context) {
+                              return const RecordingBox();
+                            },
+                          );
+
+                          if (text != null) {
+                            formKey.currentState!.save();
+                            if (focusNode == _diaryFocus) {
+                              if (content != '') {
+                                content += ' ';
+                              }
+                              content += text;
+                            } else {
+                              if (summary != '') {
+                                summary += ' ';
+                              }
+                              summary += text;
+                            }
+                            setState(() {});
+                          }
+                        },
+                        icon: const Icon(
+                          Icons.mic,
+                          color: PRIMARY_COLOR,
                         ),
                       ),
                     ),
+                  ],
+                ),
+              ),
+            ),
+            Flexible(
+              flex: 1,
+              fit: FlexFit.tight,
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: TextButton(
+                  onPressed: () {
+                    focusNode.unfocus();
+                  },
+                  child: const Text(
+                    '완료',
+                    style: TextStyle(
+                      color: Colors.black,
+                    ),
                   ),
                 ),
-              ],
+              ),
             ),
-          ),
+          ],
         ),
-      ],
+      ),
     );
   }
 
@@ -191,6 +204,7 @@ class _DiaryEditScreenState extends ConsumerState<DiaryEditScreen> {
                     localDatabase: localDatabase,
                     date: widget.date,
                     content: content,
+                    summary: summary,
                     emotion: diaryInfo?.emotion ?? 2,
                   ),
                 );
@@ -217,6 +231,7 @@ class _DiaryEditScreenState extends ConsumerState<DiaryEditScreen> {
                 autofocus = false;
                 diaryInfo = snapshot.data!;
                 content = diaryInfo!.content;
+                summary = diaryInfo!.summary;
               }
 
               isLoading = false;
@@ -243,6 +258,40 @@ class _DiaryEditScreenState extends ConsumerState<DiaryEditScreen> {
                           maxLines: null,
                           autofocus: autofocus,
                           focusNode: _diaryFocus,
+                        ),
+                        const SizedBox(height: 8.0),
+                        Container(
+                          height: 2.0,
+                          decoration: const BoxDecoration(
+                            color: Colors.grey,
+                            borderRadius: BorderRadius.all(
+                              Radius.circular(16.0),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 8.0),
+                        CustomTextFormField(
+                          valueKey: const ValueKey(2),
+                          onSaved: (value) {
+                            if (value != null) {
+                              summary = value;
+                            } else {
+                              summary = '';
+                            }
+                          },
+                          hintText: '일기를 간단하게 요약해주세요.\n자동요약 기능을 사용해보세요.',
+                          initialValue: summary,
+                          maxLines: null,
+                          focusNode: _summaryFocus,
+                        ),
+                        const SizedBox(height: 16.0),
+                        ElevatedButton(
+                          onPressed: () {},
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: PRIMARY_COLOR,
+                            foregroundColor: Colors.black,
+                          ),
+                          child: const Text('일기 자동요약'),
                         ),
                       ],
                     ),
