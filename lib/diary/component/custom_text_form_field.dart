@@ -3,8 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 class CustomTextFormField extends StatelessWidget {
-  final _customoutlineInputBorder = InputBorder.none;
-
   final ValueKey? valueKey;
   final String? Function(String?)? validator;
   final void Function(String?)? onSaved;
@@ -15,10 +13,12 @@ class CustomTextFormField extends StatelessWidget {
   final bool filled;
   final TextEditingController? textEditingController;
   final int? maxLines;
+  final int? minLines;
   final String? initialValue;
   final bool autofocus;
   final FocusNode? focusNode;
   final void Function(String)? onChanged;
+  final InputBorder inputBorder;
 
   const CustomTextFormField({
     super.key,
@@ -33,9 +33,11 @@ class CustomTextFormField extends StatelessWidget {
     this.filled = false,
     this.textEditingController,
     this.maxLines = 1,
+    this.minLines = 1,
     this.autofocus = false,
     this.focusNode,
     this.onChanged,
+    this.inputBorder = InputBorder.none,
   });
 
   @override
@@ -55,11 +57,12 @@ class CustomTextFormField extends StatelessWidget {
       style: const TextStyle(decorationThickness: 0),
       cursorColor: PRIMARY_COLOR,
       maxLines: maxLines,
+      minLines: minLines,
       decoration: InputDecoration(
-        enabledBorder: _customoutlineInputBorder,
-        focusedBorder: _customoutlineInputBorder,
-        errorBorder: _customoutlineInputBorder,
-        focusedErrorBorder: _customoutlineInputBorder,
+        enabledBorder: inputBorder,
+        focusedBorder: inputBorder,
+        errorBorder: inputBorder,
+        focusedErrorBorder: inputBorder,
         hintText: hintText,
         hintStyle: const TextStyle(fontSize: 14, color: Colors.grey),
         contentPadding: const EdgeInsets.all(10.0),

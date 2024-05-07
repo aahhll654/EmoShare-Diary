@@ -245,21 +245,25 @@ class _DiaryEditScreenState extends ConsumerState<DiaryEditScreen> {
                     child: Column(
                       children: [
                         CustomTextFormField(
-                          valueKey: const ValueKey(1),
+                          valueKey: const ValueKey(2),
                           onSaved: (value) {
                             if (value != null) {
-                              content = value;
+                              summary = value;
                             } else {
-                              content = '';
+                              summary = '';
                             }
                           },
-                          hintText: '일기를 작성해주세요.',
-                          initialValue: content,
-                          maxLines: null,
-                          autofocus: autofocus,
-                          focusNode: _diaryFocus,
+                          hintText: '오늘의 일기를 간단하게 요약해주세요.\n자동요약 기능을 사용해보세요.',
+                          initialValue: summary,
+                          minLines: 3,
+                          maxLines: 3,
+                          inputBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16.0),
+                            borderSide: const BorderSide(color: Colors.blue),
+                          ),
+                          focusNode: _summaryFocus,
                         ),
-                        const SizedBox(height: 8.0),
+                        const SizedBox(height: 16.0),
                         Container(
                           height: 2.0,
                           decoration: const BoxDecoration(
@@ -271,18 +275,20 @@ class _DiaryEditScreenState extends ConsumerState<DiaryEditScreen> {
                         ),
                         const SizedBox(height: 8.0),
                         CustomTextFormField(
-                          valueKey: const ValueKey(2),
+                          valueKey: const ValueKey(1),
                           onSaved: (value) {
                             if (value != null) {
-                              summary = value;
+                              content = value;
                             } else {
-                              summary = '';
+                              content = '';
                             }
                           },
-                          hintText: '일기를 간단하게 요약해주세요.\n자동요약 기능을 사용해보세요.',
-                          initialValue: summary,
+                          hintText: '일기를 작성해주세요.',
+                          initialValue: content,
+                          minLines: 5,
                           maxLines: null,
-                          focusNode: _summaryFocus,
+                          autofocus: autofocus,
+                          focusNode: _diaryFocus,
                         ),
                         const SizedBox(height: 16.0),
                         ElevatedButton(
