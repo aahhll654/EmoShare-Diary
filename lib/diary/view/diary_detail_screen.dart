@@ -1,3 +1,4 @@
+import 'package:emoshare_diary/common/const/colors.dart';
 import 'package:emoshare_diary/common/database/drift_database.dart';
 import 'package:emoshare_diary/common/layout/default_layout.dart';
 import 'package:emoshare_diary/diary/component/diary_scroll_view.dart';
@@ -32,6 +33,9 @@ class _DiaryEditScreenState extends ConsumerState<DiaryDetailScreen> {
           );
         } else {
           return DefaultLayout(
+            appBarBackGroundColor: PRIMARY_COLOR,
+            appBarHeight: 0.0,
+            title: '',
             child: SafeArea(
               child: DiaryScrollView(
                 selectedDay: widget.date,

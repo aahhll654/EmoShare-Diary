@@ -88,7 +88,7 @@ class _SummaryScreenState extends ConsumerState<SummaryScreen>
                                         style: const TextStyle(fontSize: 18.0),
                                       ),
                                       Mood.mood(
-                                          snapshot.data![index].emotion, 32.0),
+                                          snapshot.data![index].emotion, 42.0),
                                     ],
                                   ),
                                   const SizedBox(width: 8.0),
@@ -105,12 +105,14 @@ class _SummaryScreenState extends ConsumerState<SummaryScreen>
                                       child: Padding(
                                         padding: const EdgeInsets.only(
                                           left: 8.0,
-                                          top: 20.0,
-                                          bottom: 20.0,
+                                          top: 24.0,
+                                          bottom: 24.0,
                                         ),
                                         child: SelectionArea(
                                           child: Text(
-                                            snapshot.data![index].summary,
+                                            snapshot.data![index].summary == ''
+                                                ? '일기의 요약본이 없습니다.'
+                                                : snapshot.data![index].summary,
                                             style: const TextStyle(
                                               fontSize: 16.0,
                                               height: 1.6,

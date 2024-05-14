@@ -1,8 +1,10 @@
+import 'package:dio/dio.dart';
 import 'package:emoshare_diary/common/const/colors.dart';
 import 'package:emoshare_diary/common/database/drift_database.dart';
 import 'package:emoshare_diary/common/layout/default_layout.dart';
 import 'package:emoshare_diary/diary/component/custom_text_form_field.dart';
 import 'package:emoshare_diary/diary/component/emotion_alert_dialog.dart';
+import 'package:emoshare_diary/diary/component/loading_alert_dialog.dart';
 import 'package:emoshare_diary/diary/component/recording_box.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -25,14 +27,18 @@ class DiaryEditScreen extends ConsumerStatefulWidget {
 
 class _DiaryEditScreenState extends ConsumerState<DiaryEditScreen> {
   final formKey = GlobalKey<FormState>();
+  final _topFocus = FocusNode();
   final _diaryFocus = FocusNode();
   final _summaryFocus = FocusNode();
   bool isLoading = true;
   bool isCreated = false;
+  bool isInitState = true;
   String content = '';
   String summary = '';
   DiaryInfo? diaryInfo;
   bool autofocus = true;
+  final TextEditingController _summaryTextEditingController =
+      TextEditingController(text: '');
 
   KeyboardActionsConfig _buildKeyboardActionsConfig(BuildContext context) {
     return KeyboardActionsConfig(
@@ -226,12 +232,14 @@ class _DiaryEditScreenState extends ConsumerState<DiaryEditScreen> {
                 child: CircularProgressIndicator(),
               );
             } else {
-              if (snapshot.data != null) {
+              if (snapshot.data != null && isInitState) {
                 isCreated = true;
                 autofocus = false;
                 diaryInfo = snapshot.data!;
                 content = diaryInfo!.content;
-                summary = diaryInfo!.summary;
+                _summaryTextEditingController.text = diaryInfo!.summary;
+
+                isInitState = false;
               }
 
               isLoading = false;
@@ -244,6 +252,10 @@ class _DiaryEditScreenState extends ConsumerState<DiaryEditScreen> {
                     config: _buildKeyboardActionsConfig(context),
                     child: Column(
                       children: [
+                        Focus(
+                          focusNode: _topFocus,
+                          child: const SizedBox(),
+                        ),
                         CustomTextFormField(
                           valueKey: const ValueKey(2),
                           onSaved: (value) {
@@ -254,9 +266,9 @@ class _DiaryEditScreenState extends ConsumerState<DiaryEditScreen> {
                             }
                           },
                           hintText: '오늘의 일기를 간단하게 요약해주세요.\n자동요약 기능을 사용해보세요.',
-                          initialValue: summary,
+                          textEditingController: _summaryTextEditingController,
                           minLines: 3,
-                          maxLines: 3,
+                          maxLines: null,
                           inputBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16.0),
                             borderSide: const BorderSide(color: Colors.blue),
@@ -292,7 +304,33 @@ class _DiaryEditScreenState extends ConsumerState<DiaryEditScreen> {
                         ),
                         const SizedBox(height: 16.0),
                         ElevatedButton(
-                          onPressed: () {},
+                          onPressed: () async {
+                            formKey.currentState!.save();
+
+                            showDialog(
+                              barrierDismissible: false,
+                              context: context,
+                              builder: (context) => const LoadingAlertDialog(),
+                            );
+
+                            final response = await Dio().post(
+                              'http://10.0.2.2:5001/emo-share-diary/asia-northeast3/openaiAPI/summarize',
+                              data: {
+                                'content': content,
+                              },
+                            );
+
+                            autofocus = false;
+
+                            _summaryTextEditingController.text = response.data;
+
+                            Scrollable.ensureVisible(
+                              _topFocus.context!,
+                              duration: const Duration(milliseconds: 300),
+                            );
+
+                            context.pop();
+                          },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: PRIMARY_COLOR,
                             foregroundColor: Colors.black,

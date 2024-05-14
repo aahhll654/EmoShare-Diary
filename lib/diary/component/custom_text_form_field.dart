@@ -19,6 +19,7 @@ class CustomTextFormField extends StatelessWidget {
   final FocusNode? focusNode;
   final void Function(String)? onChanged;
   final InputBorder inputBorder;
+  final ScrollController? scrollController;
 
   const CustomTextFormField({
     super.key,
@@ -38,11 +39,13 @@ class CustomTextFormField extends StatelessWidget {
     this.focusNode,
     this.onChanged,
     this.inputBorder = InputBorder.none,
+    this.scrollController,
   });
 
   @override
   Widget build(BuildContext context) {
     return TextFormField(
+      scrollController: scrollController,
       key: valueKey,
       validator: validator,
       onSaved: onSaved,

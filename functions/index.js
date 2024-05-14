@@ -20,6 +20,44 @@ exports.openaiAPI = functions.region("asia-northeast3").https.onRequest(app);
 
 const tmpdir = os.tmpdir();
 
+openAI.post("/loading", async (req, res) => {
+  await new Promise((resolve) => setTimeout(resolve, 15000));
+
+  res.send("ok");
+});
+
+openAI.post("/summarize", async (req, res) => {
+  try {
+    const response = await axios.post(
+      "https://api.openai.com/v1/chat/completions",
+      {
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "system",
+            content:
+              "Summarize the following diary entry in one line in Korean.",
+          },
+          {
+            role: "user",
+            content: `${req.body.content}`,
+          },
+        ],
+      },
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${whisperApiKey}`,
+        },
+      }
+    );
+
+    res.send(response.data.choices[0].message.content);
+  } catch (error) {
+    res.status(400).send(error.message);
+  }
+});
+
 openAI.post("/stt", async (req, res) => {
   const busboy = Busboy({ headers: req.headers });
 

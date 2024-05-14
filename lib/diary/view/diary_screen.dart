@@ -87,30 +87,37 @@ class _DiaryScreenState extends ConsumerState<DiaryScreen>
             },
           ),
           const SizedBox(height: 8.0),
-          Container(
-            clipBehavior: Clip.hardEdge,
-            width: double.infinity,
-            height: 20,
-            decoration: const BoxDecoration(
-              color: PRIMARY_COLOR,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(16.0)),
-            ),
-            child: GestureDetector(
-              onTap: () {
-                if (_calendarFormat == CalendarFormat.month) {
-                  setState(() {
-                    _calendarFormat = CalendarFormat.week;
-                    arrowIcon = const Icon(Icons.keyboard_arrow_down);
-                  });
-                } else if (_calendarFormat == CalendarFormat.week) {
-                  setState(() {
-                    _calendarFormat = CalendarFormat.month;
-                    arrowIcon = const Icon(Icons.keyboard_arrow_up);
-                  });
-                }
-              },
-              child: Center(
-                child: arrowIcon,
+          Transform.translate(
+            offset: const Offset(0, 1),
+            child: Container(
+              clipBehavior: Clip.hardEdge,
+              width: double.infinity,
+              height: 20,
+              decoration: BoxDecoration(
+                border: Border.all(
+                  color: PRIMARY_COLOR,
+                ),
+                color: PRIMARY_COLOR,
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(16.0)),
+              ),
+              child: GestureDetector(
+                onTap: () {
+                  if (_calendarFormat == CalendarFormat.month) {
+                    setState(() {
+                      _calendarFormat = CalendarFormat.week;
+                      arrowIcon = const Icon(Icons.keyboard_arrow_down);
+                    });
+                  } else if (_calendarFormat == CalendarFormat.week) {
+                    setState(() {
+                      _calendarFormat = CalendarFormat.month;
+                      arrowIcon = const Icon(Icons.keyboard_arrow_up);
+                    });
+                  }
+                },
+                child: Center(
+                  child: arrowIcon,
+                ),
               ),
             ),
           ),

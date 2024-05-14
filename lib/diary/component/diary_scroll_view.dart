@@ -41,7 +41,7 @@ class DiaryScrollView extends ConsumerWidget {
             ],
           ),
           centerTitle: true,
-          backgroundColor: isDetail ? BACKGROUND_COLOR : Colors.grey,
+          backgroundColor: PRIMARY_COLOR,
           actions: [
             IconButton(
               onPressed: () {
