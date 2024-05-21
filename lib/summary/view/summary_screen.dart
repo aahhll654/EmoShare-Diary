@@ -1,9 +1,9 @@
-import 'package:emoshare_diary/common/const/mood.dart';
 import 'package:emoshare_diary/common/database/drift_database.dart';
-import 'package:emoshare_diary/diary/view/diary_detail_screen.dart';
+import 'package:emoshare_diary/summary/component/daily_summary.dart';
+import 'package:emoshare_diary/summary/component/monthly_summary.dart';
+import 'package:emoshare_diary/summary/component/weekly_summary.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 class SummaryScreen extends ConsumerStatefulWidget {
   const SummaryScreen({super.key});
@@ -20,6 +20,7 @@ class _SummaryScreenState extends ConsumerState<SummaryScreen>
     DateTime.now().day,
   );
   late LocalDatabase localDatabase;
+  int _dropDownValue = 1;
 
   @override
   void initState() {
@@ -40,116 +41,76 @@ class _SummaryScreenState extends ConsumerState<SummaryScreen>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            TextButton(
-              onPressed: () {},
-              style: TextButton.styleFrom(
-                foregroundColor: Colors.blue,
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    '${_selectedDay.year}년 ${_selectedDay.month}월',
-                    style: const TextStyle(fontSize: 18.0),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                TextButton(
+                  onPressed: () {},
+                  style: TextButton.styleFrom(
+                    foregroundColor: Colors.blue,
                   ),
-                  const Icon(
-                    Icons.keyboard_arrow_down,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        '${_selectedDay.year}년 ${_selectedDay.month}월',
+                        style: const TextStyle(fontSize: 18.0),
+                      ),
+                      const Icon(
+                        Icons.keyboard_arrow_down,
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+                DropdownButton(
+                  items: const [
+                    DropdownMenuItem(
+                      value: 1,
+                      child: Text('일간 요약'),
+                    ),
+                    DropdownMenuItem(
+                      value: 2,
+                      child: Text('주간 요약'),
+                    ),
+                    DropdownMenuItem(
+                      value: 3,
+                      child: Text('월간 요약'),
+                    ),
+                  ],
+                  onChanged: (value) {
+                    setState(() {
+                      _dropDownValue = value as int;
+                    });
+                  },
+                  value: _dropDownValue,
+                ),
+              ],
             ),
             Container(
               height: 2.0,
               color: Colors.grey,
             ),
-            Expanded(
-              child: StreamBuilder(
-                stream: localDatabase.watchDiaryInfosByMonth(_selectedDay),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(
-                      child: CircularProgressIndicator(),
-                    );
-                  } else if (snapshot.data == null || snapshot.data!.isEmpty) {
-                    return const Center(child: Text('작성된 일기가 없습니다.'));
-                  } else {
-                    return ListView.separated(
-                      itemBuilder: (context, index) {
-                        return Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Flexible(
-                              child: Row(
-                                children: [
-                                  Column(
-                                    children: [
-                                      Text(
-                                        '${snapshot.data![index].date.month}/${snapshot.data![index].date.day}',
-                                        style: const TextStyle(fontSize: 18.0),
-                                      ),
-                                      Mood.mood(
-                                          snapshot.data![index].emotion, 42.0),
-                                    ],
-                                  ),
-                                  const SizedBox(width: 8.0),
-                                  Flexible(
-                                    child: Container(
-                                      decoration: const BoxDecoration(
-                                        border: Border(
-                                          left: BorderSide(
-                                            color: Colors.grey,
-                                            width: 1.0,
-                                          ),
-                                        ),
-                                      ),
-                                      child: Padding(
-                                        padding: const EdgeInsets.only(
-                                          left: 8.0,
-                                          top: 24.0,
-                                          bottom: 24.0,
-                                        ),
-                                        child: SelectionArea(
-                                          child: Text(
-                                            snapshot.data![index].summary == ''
-                                                ? '일기의 요약본이 없습니다.'
-                                                : snapshot.data![index].summary,
-                                            style: const TextStyle(
-                                              fontSize: 16.0,
-                                              height: 1.6,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            IconButton(
-                              onPressed: () {
-                                context.goNamed(
-                                  DiaryDetailScreen.routeName,
-                                  pathParameters: {
-                                    'date':
-                                        snapshot.data![index].date.toString(),
-                                  },
-                                );
-                              },
-                              icon: const Icon(Icons.arrow_forward_ios),
-                            ),
-                          ],
-                        );
-                      },
-                      separatorBuilder: (_, __) => Container(
-                        height: 2.0,
-                        color: Colors.grey,
-                      ),
-                      itemCount: snapshot.data!.length,
-                    );
-                  }
-                },
+            if (_dropDownValue == 1)
+              Expanded(
+                child: DailySummary(
+                  localDatabase: localDatabase,
+                  selectedDay: _selectedDay,
+                ),
               ),
-            ),
+            if (_dropDownValue == 2)
+              Expanded(
+                child: WeeklySummary(
+                  localDatabase: localDatabase,
+                  selectedDay: _selectedDay,
+                ),
+              ),
+            if (_dropDownValue == 3)
+              Expanded(
+                child: MonthlySummary(
+                  localDatabase: localDatabase,
+                  selectedDay: _selectedDay,
+                ),
+              ),
           ],
         ),
       ),

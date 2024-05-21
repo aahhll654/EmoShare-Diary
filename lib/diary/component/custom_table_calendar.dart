@@ -10,8 +10,12 @@ class CustomTableCalendar extends ConsumerStatefulWidget {
   final DateTime focusedDay;
   final CalendarFormat calendarFormat;
   final OnDaySelected onDaySelected;
+  final void Function(int) onWeekSelected;
   final void Function(DateTime)? onPageChanged;
+  final void Function()? onTodayButtonTapped;
   final List<Map<String, dynamic>> monthlyEmotionList;
+  final bool isWeekSelected;
+  final DateTime? firstDayOfWeek;
 
   const CustomTableCalendar({
     super.key,
@@ -19,8 +23,12 @@ class CustomTableCalendar extends ConsumerStatefulWidget {
     required this.focusedDay,
     required this.calendarFormat,
     required this.onDaySelected,
+    required this.onWeekSelected,
     required this.onPageChanged,
+    required this.onTodayButtonTapped,
     required this.monthlyEmotionList,
+    required this.isWeekSelected,
+    this.firstDayOfWeek,
   });
 
   @override
@@ -34,9 +42,14 @@ class _CustomTableCalendarState extends ConsumerState<CustomTableCalendar> {
     return TableCalendar(
       locale: 'ko_KR',
       daysOfWeekHeight: 30,
+      startingDayOfWeek: StartingDayOfWeek.monday,
       focusedDay: widget.focusedDay,
       firstDay: DateTime(1900, 01, 01),
       lastDay: DateTime(2999, 12, 31),
+      rangeStartDay: widget.isWeekSelected ? widget.firstDayOfWeek! : null,
+      rangeEndDay: widget.isWeekSelected
+          ? widget.firstDayOfWeek!.add(const Duration(days: 6))
+          : null,
       calendarFormat: widget.calendarFormat,
       formatAnimationCurve: Curves.ease,
       formatAnimationDuration: const Duration(milliseconds: 1000),
@@ -50,7 +63,60 @@ class _CustomTableCalendarState extends ConsumerState<CustomTableCalendar> {
       ),
       availableGestures: AvailableGestures.horizontalSwipe,
       onPageChanged: widget.onPageChanged,
+      weekNumbersVisible: true,
       calendarBuilders: CalendarBuilders(
+        headerTitleBuilder: (context, day) {
+          return Row(
+            children: [
+              const Flexible(
+                fit: FlexFit.tight,
+                flex: 1,
+                child: SizedBox(),
+              ),
+              Flexible(
+                fit: FlexFit.tight,
+                flex: 3,
+                child: Center(
+                  child: Text(
+                    '${day.year}년 ${day.month}월',
+                    style: const TextStyle(
+                      fontSize: 18.0,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ),
+              Flexible(
+                fit: FlexFit.tight,
+                flex: 1,
+                child: TextButton(
+                  onPressed: widget.onTodayButtonTapped,
+                  child: const Text(
+                    '오늘',
+                    style: TextStyle(color: Colors.blue, fontSize: 14.0),
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
+        weekNumberBuilder: (context, weekNumber) {
+          return Center(
+            child: TextButton(
+              onPressed: () {
+                widget.onWeekSelected(weekNumber);
+              },
+              child: Text(
+                '$weekNumber주차',
+                style: const TextStyle(
+                  fontSize: 14.0,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.blue,
+                ),
+              ),
+            ),
+          );
+        },
         markerBuilder: (context, day, events) {
           for (Map<String, dynamic> element in widget.monthlyEmotionList) {
             final DateTime date = element['date'];
@@ -102,10 +168,15 @@ class _CustomTableCalendarState extends ConsumerState<CustomTableCalendar> {
           ],
         ),
       ),
-      selectedDayPredicate: (day) =>
-          day.year == widget.selectedDay.year &&
-          day.month == widget.selectedDay.month &&
-          day.day == widget.selectedDay.day,
+      selectedDayPredicate: (day) {
+        if (widget.isWeekSelected) {
+          return false;
+        } else {
+          return day.year == widget.selectedDay.year &&
+              day.month == widget.selectedDay.month &&
+              day.day == widget.selectedDay.day;
+        }
+      },
       onDaySelected: widget.onDaySelected,
     );
   }

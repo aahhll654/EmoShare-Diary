@@ -1,9 +1,9 @@
 import 'package:dio/dio.dart';
+import 'package:drift/drift.dart' as d;
 import 'package:emoshare_diary/common/const/colors.dart';
 import 'package:emoshare_diary/common/database/drift_database.dart';
 import 'package:emoshare_diary/common/layout/default_layout.dart';
 import 'package:emoshare_diary/diary/component/custom_text_form_field.dart';
-import 'package:emoshare_diary/diary/component/emotion_alert_dialog.dart';
 import 'package:emoshare_diary/diary/component/loading_alert_dialog.dart';
 import 'package:emoshare_diary/diary/component/recording_box.dart';
 import 'package:flutter/material.dart';
@@ -11,31 +11,33 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:keyboard_actions/keyboard_actions.dart';
 
-class DiaryEditScreen extends ConsumerStatefulWidget {
-  static String get routeName => 'diaryedit';
+class WeeklyDiaryEditScreen extends ConsumerStatefulWidget {
+  static String get routeName => 'weeklydiaryedit';
 
-  final DateTime date;
+  final DateTime _firstDayOfGivenWeek;
+  final int _weekNumber;
 
-  DiaryEditScreen({
+  WeeklyDiaryEditScreen({
     super.key,
-    required String date,
-  }) : date = DateTime.parse(date);
+    required String firstDayOfGivenWeek,
+    required String weekNumber,
+  })  : _firstDayOfGivenWeek = DateTime.parse(firstDayOfGivenWeek),
+        _weekNumber = int.parse(weekNumber);
 
   @override
-  ConsumerState<DiaryEditScreen> createState() => _DiaryEditScreenState();
+  ConsumerState<WeeklyDiaryEditScreen> createState() => _DiaryEditScreenState();
 }
 
-class _DiaryEditScreenState extends ConsumerState<DiaryEditScreen> {
+class _DiaryEditScreenState extends ConsumerState<WeeklyDiaryEditScreen> {
   final formKey = GlobalKey<FormState>();
   final _topFocus = FocusNode();
-  final _diaryFocus = FocusNode();
   final _summaryFocus = FocusNode();
   bool isLoading = true;
   bool isCreated = false;
   bool isInitState = true;
   String content = '';
   String summary = '';
-  DiaryInfo? diaryInfo;
+  WeeklyDiaryInfo? weeklyDiaryInfo;
   bool autofocus = true;
   final TextEditingController _summaryTextEditingController =
       TextEditingController(text: '');
@@ -45,7 +47,6 @@ class _DiaryEditScreenState extends ConsumerState<DiaryEditScreen> {
       keyboardActionsPlatform: KeyboardActionsPlatform.ALL,
       keyboardBarColor: PRIMARY_COLOR,
       actions: [
-        _buildKeyboardActionsItem(_diaryFocus),
         _buildKeyboardActionsItem(_summaryFocus),
       ],
     );
@@ -80,7 +81,7 @@ class _DiaryEditScreenState extends ConsumerState<DiaryEditScreen> {
                       ),
                       child: IconButton(
                         onPressed: () async {
-                          _diaryFocus.unfocus();
+                          _summaryFocus.unfocus();
                           final String? text = await showModalBottomSheet(
                             shape: const RoundedRectangleBorder(
                               borderRadius: BorderRadius.only(
@@ -106,17 +107,10 @@ class _DiaryEditScreenState extends ConsumerState<DiaryEditScreen> {
 
                           if (text != null) {
                             formKey.currentState!.save();
-                            if (focusNode == _diaryFocus) {
-                              if (content != '') {
-                                content += ' ';
-                              }
-                              content += text;
-                            } else if (focusNode == _summaryFocus) {
-                              if (summary != '') {
-                                summary += ' ';
-                              }
-                              summary += text;
+                            if (summary != '') {
+                              summary += ' ';
                             }
+                            summary += text;
                             setState(() {});
                           }
                         },
@@ -196,24 +190,46 @@ class _DiaryEditScreenState extends ConsumerState<DiaryEditScreen> {
         );
       },
       child: DefaultLayout(
-        title: '${widget.date.year}년 ${widget.date.month}월 ${widget.date.day}일',
+        titleWidget: Column(
+          children: [
+            Text(
+              '${widget._firstDayOfGivenWeek.year}년 ${widget._weekNumber}주차',
+              style: const TextStyle(fontSize: 18.0),
+            ),
+            Text(
+              '${widget._firstDayOfGivenWeek.month}월 ${widget._firstDayOfGivenWeek.day}일 ~ ${widget._firstDayOfGivenWeek.add(const Duration(days: 6)).month}월 ${widget._firstDayOfGivenWeek.add(const Duration(days: 6)).day}일',
+              style: const TextStyle(fontSize: 16.0),
+            ),
+          ],
+        ),
         actions: [
           TextButton(
             onPressed: () async {
               if (!isLoading) {
                 formKey.currentState!.save();
 
-                showDialog(
-                  context: context,
-                  builder: (context) => EmotionAlertDialog(
-                    isCreated: isCreated,
-                    localDatabase: localDatabase,
-                    date: widget.date,
-                    content: content,
-                    summary: summary,
-                    emotion: diaryInfo?.emotion ?? 2,
-                  ),
-                );
+                if (!isCreated) {
+                  // 기존 데이터 없는 경우 새 기록 insert
+                  await localDatabase.createWeeklyDiaryInfo(
+                    WeeklyDiaryInfosCompanion(
+                      year: d.Value(widget._firstDayOfGivenWeek.year),
+                      weeknumber: d.Value(widget._weekNumber),
+                      summary: d.Value(summary),
+                      createdAt: d.Value(DateTime.now()),
+                      updatedAt: d.Value(DateTime.now()),
+                    ),
+                  );
+                } else {
+                  // 기존 기록 있는 경우 기록 update
+                  await localDatabase.updateWeeklyDiaryInfo(
+                    widget._firstDayOfGivenWeek.year,
+                    widget._weekNumber,
+                    summary,
+                    DateTime.now(),
+                  );
+                }
+
+                context.pop();
               }
             },
             child: const Text(
@@ -225,7 +241,10 @@ class _DiaryEditScreenState extends ConsumerState<DiaryEditScreen> {
           ),
         ],
         child: FutureBuilder(
-          future: localDatabase.watchDiaryInfos(widget.date).first,
+          future: localDatabase
+              .watchWeeklyDiaryInfos(
+                  widget._firstDayOfGivenWeek.year, widget._weekNumber)
+              .first,
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const Center(
@@ -235,9 +254,8 @@ class _DiaryEditScreenState extends ConsumerState<DiaryEditScreen> {
               if (snapshot.data != null && isInitState) {
                 isCreated = true;
                 autofocus = false;
-                diaryInfo = snapshot.data!;
-                content = diaryInfo!.content;
-                _summaryTextEditingController.text = diaryInfo!.summary;
+                weeklyDiaryInfo = snapshot.data!;
+                _summaryTextEditingController.text = weeklyDiaryInfo!.summary;
 
                 isInitState = false;
               }
@@ -257,7 +275,7 @@ class _DiaryEditScreenState extends ConsumerState<DiaryEditScreen> {
                           child: const SizedBox(),
                         ),
                         CustomTextFormField(
-                          valueKey: const ValueKey(2),
+                          valueKey: const ValueKey(1),
                           onSaved: (value) {
                             if (value != null) {
                               summary = value;
@@ -265,9 +283,9 @@ class _DiaryEditScreenState extends ConsumerState<DiaryEditScreen> {
                               summary = '';
                             }
                           },
-                          hintText: '오늘의 일기를 간단하게 요약해주세요.\n자동요약 기능을 사용해보세요.',
+                          hintText: '주간 요약을 간단하게 진행해주세요.\n자동요약 기능을 사용해보세요.',
                           textEditingController: _summaryTextEditingController,
-                          minLines: 3,
+                          minLines: 10,
                           maxLines: null,
                           inputBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16.0),
@@ -285,23 +303,6 @@ class _DiaryEditScreenState extends ConsumerState<DiaryEditScreen> {
                             ),
                           ),
                         ),
-                        const SizedBox(height: 8.0),
-                        CustomTextFormField(
-                          valueKey: const ValueKey(1),
-                          onSaved: (value) {
-                            if (value != null) {
-                              content = value;
-                            } else {
-                              content = '';
-                            }
-                          },
-                          hintText: '일기를 작성해주세요.',
-                          initialValue: content,
-                          minLines: 5,
-                          maxLines: null,
-                          autofocus: autofocus,
-                          focusNode: _diaryFocus,
-                        ),
                         const SizedBox(height: 16.0),
                         ElevatedButton(
                           onPressed: () async {
@@ -313,16 +314,16 @@ class _DiaryEditScreenState extends ConsumerState<DiaryEditScreen> {
                               builder: (context) => const LoadingAlertDialog(),
                             );
 
-                            final response = await Dio().post(
-                              'http://10.0.2.2:5001/emo-share-diary/asia-northeast3/openaiAPI/summarize',
-                              data: {
-                                'content': content,
-                              },
-                            );
+                            // final response = await Dio().post(
+                            //   'http://10.0.2.2:5001/emo-share-diary/asia-northeast3/openaiAPI/summarize',
+                            //   data: {
+                            //     'content': content,
+                            //   },
+                            // );
 
                             autofocus = false;
 
-                            _summaryTextEditingController.text = response.data;
+                            // _summaryTextEditingController.text = response.data;
 
                             Scrollable.ensureVisible(
                               _topFocus.context!,
@@ -335,7 +336,7 @@ class _DiaryEditScreenState extends ConsumerState<DiaryEditScreen> {
                             backgroundColor: PRIMARY_COLOR,
                             foregroundColor: Colors.black,
                           ),
-                          child: const Text('일기 자동요약'),
+                          child: const Text('주간 요약'),
                         ),
                       ],
                     ),

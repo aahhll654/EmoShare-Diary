@@ -91,7 +91,9 @@ class DiaryScrollView extends ConsumerWidget {
               onPressed: () {
                 context.goNamed(
                   DiaryEditScreen.routeName,
-                  pathParameters: {'date': selectedDay.toString()},
+                  pathParameters: {
+                    'date': selectedDay.toString(),
+                  },
                 );
               },
               icon: const Icon(

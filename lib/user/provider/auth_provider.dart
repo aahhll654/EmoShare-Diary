@@ -2,6 +2,7 @@ import 'package:emoshare_diary/common/view/root_tab.dart';
 import 'package:emoshare_diary/common/view/splash_screen.dart';
 import 'package:emoshare_diary/diary/view/diary_detail_screen.dart';
 import 'package:emoshare_diary/diary/view/diary_edit_screen.dart';
+import 'package:emoshare_diary/diary/view/weekly_diary_edit_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -30,6 +31,14 @@ class AuthProvider extends ChangeNotifier {
               name: DiaryEditScreen.routeName,
               builder: (_, state) => DiaryEditScreen(
                 date: state.pathParameters['date']!,
+              ),
+            ),
+            GoRoute(
+              path: 'weeklydiaryedit/:date/:weekNumber',
+              name: WeeklyDiaryEditScreen.routeName,
+              builder: (_, state) => WeeklyDiaryEditScreen(
+                firstDayOfGivenWeek: state.pathParameters['date']!,
+                weekNumber: state.pathParameters['weekNumber']!,
               ),
             ),
             GoRoute(
