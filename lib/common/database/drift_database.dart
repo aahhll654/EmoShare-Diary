@@ -44,6 +44,12 @@ class LocalDatabase extends _$LocalDatabase {
             ..orderBy([(tbl) => OrderingTerm.desc(tbl.date)]))
           .watch();
 
+  Stream<List<WeeklyDiaryInfo>> watchWeeklyInfosByYear(DateTime date) =>
+      (select(weeklyDiaryInfos)
+            ..where((tbl) => tbl.year.equals(date.year))
+            ..orderBy([(tbl) => OrderingTerm.desc(tbl.weeknumber)]))
+          .watch();
+
   Stream<List<Map<String, dynamic>>> watchEmotionInfosByMonth(DateTime date) =>
       (selectOnly(diaryInfos, distinct: true)
             ..addColumns([diaryInfos.date, diaryInfos.emotion])
@@ -52,6 +58,17 @@ class LocalDatabase extends _$LocalDatabase {
           .map((row) => {
                 'date': row.read(diaryInfos.date),
                 'emotion': row.read(diaryInfos.emotion),
+              })
+          .watch();
+
+  Stream<List<Map<String, dynamic>>> watchYearlyWeekDiaryCheckList(
+          DateTime date) =>
+      (selectOnly(weeklyDiaryInfos, distinct: true)
+            ..addColumns([weeklyDiaryInfos.year, weeklyDiaryInfos.weeknumber])
+            ..where(weeklyDiaryInfos.year.equals(date.year)))
+          .map((row) => {
+                'year': row.read(weeklyDiaryInfos.year),
+                'weeknumber': row.read(weeklyDiaryInfos.weeknumber),
               })
           .watch();
 

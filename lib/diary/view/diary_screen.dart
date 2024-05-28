@@ -5,10 +5,9 @@ import 'package:emoshare_diary/common/database/drift_database.dart';
 import 'package:emoshare_diary/diary/component/create_new_diary_button.dart';
 import 'package:emoshare_diary/diary/component/custom_table_calendar.dart';
 import 'package:emoshare_diary/diary/component/diary_scroll_view.dart';
-import 'package:emoshare_diary/diary/view/weekly_diary_edit_screen.dart';
+import 'package:emoshare_diary/diary/component/weekly_diary_scroll_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:table_calendar/table_calendar.dart';
 
 class DiaryScreen extends ConsumerStatefulWidget {
@@ -29,8 +28,10 @@ class _DiaryScreenState extends ConsumerState<DiaryScreen>
   CalendarFormat _calendarFormat = CalendarFormat.month;
   Icon arrowIcon = const Icon(Icons.keyboard_arrow_up);
   List<Map<String, dynamic>> monthlyEmotionList = [];
+  List<Map<String, dynamic>> yearlyWeekDiaryCheckList = [];
   late LocalDatabase localDatabase;
   late StreamSubscription monthlyEmotionListSubscription;
+  late StreamSubscription yearlyWeekDiaryCheckListSubscription;
   bool _isWeekSelected = false;
   DateTime? _firstDayOfGivenWeek;
   int? _weekNumber;
@@ -48,11 +49,20 @@ class _DiaryScreenState extends ConsumerState<DiaryScreen>
         monthlyEmotionList = data;
       });
     });
+
+    yearlyWeekDiaryCheckListSubscription = localDatabase
+        .watchYearlyWeekDiaryCheckList(_selectedDay)
+        .listen((data) {
+      setState(() {
+        yearlyWeekDiaryCheckList = data;
+      });
+    });
   }
 
   @override
   void dispose() {
     monthlyEmotionListSubscription.cancel();
+    yearlyWeekDiaryCheckListSubscription.cancel();
     super.dispose();
   }
 
@@ -69,6 +79,7 @@ class _DiaryScreenState extends ConsumerState<DiaryScreen>
             isWeekSelected: _isWeekSelected,
             calendarFormat: _calendarFormat,
             monthlyEmotionList: monthlyEmotionList,
+            yearlyWeekDiaryCheckList: yearlyWeekDiaryCheckList,
             firstDayOfWeek: _firstDayOfGivenWeek,
             onTodayButtonTapped: () {
               setState(() {
@@ -117,8 +128,6 @@ class _DiaryScreenState extends ConsumerState<DiaryScreen>
               });
             },
             onPageChanged: (focusedDay) {
-              _focusedDay = focusedDay;
-
               monthlyEmotionListSubscription.cancel();
               monthlyEmotionListSubscription = localDatabase
                   .watchEmotionInfosByMonth(focusedDay)
@@ -127,6 +136,19 @@ class _DiaryScreenState extends ConsumerState<DiaryScreen>
                   monthlyEmotionList = data;
                 });
               });
+
+              if (_focusedDay.year != focusedDay.year) {
+                yearlyWeekDiaryCheckListSubscription.cancel();
+                yearlyWeekDiaryCheckListSubscription = localDatabase
+                    .watchYearlyWeekDiaryCheckList(focusedDay)
+                    .listen((data) {
+                  setState(() {
+                    yearlyWeekDiaryCheckList = data;
+                  });
+                });
+              }
+
+              _focusedDay = focusedDay;
             },
           ),
           const SizedBox(height: 8.0),
@@ -166,115 +188,10 @@ class _DiaryScreenState extends ConsumerState<DiaryScreen>
           ),
           if (_isWeekSelected)
             Expanded(
-              child: StreamBuilder(
-                stream: localDatabase.watchWeeklyDiaryInfos(
-                    _firstDayOfGivenWeek!.year, _weekNumber!),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(
-                      child: CircularProgressIndicator(),
-                    );
-                  } else if (snapshot.data == null) {
-                    return CreateNewDiaryButton(
-                      selectedDay: _firstDayOfGivenWeek!,
-                      weekNumber: _weekNumber,
-                    );
-                  } else {
-                    final weeklyDiaryInfo = snapshot.data!;
-                    return CustomScrollView(
-                      slivers: [
-                        SliverAppBar(
-                          pinned: true,
-                          scrolledUnderElevation: 0.0,
-                          title: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                  '${_firstDayOfGivenWeek!.year}년 $_weekNumber주차'),
-                            ],
-                          ),
-                          centerTitle: true,
-                          backgroundColor: PRIMARY_COLOR,
-                          actions: [
-                            IconButton(
-                              onPressed: () {
-                                showDialog(
-                                  context: context,
-                                  builder: (context) => AlertDialog(
-                                    surfaceTintColor: BACKGROUND_COLOR,
-                                    backgroundColor: BACKGROUND_COLOR,
-                                    content: const Text(
-                                      '일기를 삭제하시겠습니까?',
-                                      style: TextStyle(fontSize: 16.0),
-                                    ),
-                                    actions: [
-                                      ElevatedButton(
-                                        style: ElevatedButton.styleFrom(
-                                          foregroundColor: Colors.red,
-                                        ),
-                                        onPressed: () async {
-                                          await ref
-                                              .read(localDatabaseProvider)
-                                              .removeWeeklyDiaryInfo(
-                                                _firstDayOfGivenWeek!.year,
-                                                _weekNumber!,
-                                              );
-                                          context.pop();
-                                        },
-                                        child: const Text('삭제'),
-                                      ),
-                                      ElevatedButton(
-                                        style: ElevatedButton.styleFrom(
-                                          foregroundColor: Colors.grey.shade700,
-                                        ),
-                                        onPressed: () {
-                                          context.pop();
-                                        },
-                                        child: const Text('취소'),
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              },
-                              icon: const Icon(
-                                Icons.delete,
-                              ),
-                            ),
-                            IconButton(
-                              onPressed: () {
-                                context.goNamed(
-                                  WeeklyDiaryEditScreen.routeName,
-                                  pathParameters: {
-                                    'date': _firstDayOfGivenWeek!.toString(),
-                                    'weekNumber': _weekNumber.toString(),
-                                  },
-                                );
-                              },
-                              icon: const Icon(
-                                Icons.edit,
-                              ),
-                            ),
-                          ],
-                          toolbarHeight: 42.0,
-                        ),
-                        SliverPadding(
-                          padding: const EdgeInsets.all(16.0),
-                          sliver: SliverToBoxAdapter(
-                            child: SelectionArea(
-                              child: Text(
-                                weeklyDiaryInfo.summary,
-                                style: const TextStyle(
-                                  fontSize: 16.0,
-                                  height: 1.6,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    );
-                  }
-                },
+              child: WeeklyDiaryScrollView(
+                localDatabase: localDatabase,
+                firstDayOfGivenWeek: _firstDayOfGivenWeek!,
+                weekNumber: _weekNumber!,
               ),
             ),
           if (!_isWeekSelected)

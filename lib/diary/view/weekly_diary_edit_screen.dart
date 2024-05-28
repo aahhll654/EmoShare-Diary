@@ -35,7 +35,6 @@ class _DiaryEditScreenState extends ConsumerState<WeeklyDiaryEditScreen> {
   bool isLoading = true;
   bool isCreated = false;
   bool isInitState = true;
-  String content = '';
   String summary = '';
   WeeklyDiaryInfo? weeklyDiaryInfo;
   bool autofocus = true;
@@ -314,16 +313,38 @@ class _DiaryEditScreenState extends ConsumerState<WeeklyDiaryEditScreen> {
                               builder: (context) => const LoadingAlertDialog(),
                             );
 
-                            // final response = await Dio().post(
-                            //   'http://10.0.2.2:5001/emo-share-diary/asia-northeast3/openaiAPI/summarize',
-                            //   data: {
-                            //     'content': content,
-                            //   },
-                            // );
+                            final oneWeekDiaryInfos = <String?>[
+                              '',
+                              '',
+                              '',
+                              '',
+                              '',
+                              '',
+                              '',
+                            ];
+
+                            for (int i = 0; i < 7; i++) {
+                              final diaryInfo = await localDatabase
+                                  .watchDiaryInfos(
+                                    widget._firstDayOfGivenWeek.add(
+                                      Duration(days: i),
+                                    ),
+                                  )
+                                  .first;
+
+                              oneWeekDiaryInfos[i] = diaryInfo?.summary ?? '';
+                            }
+
+                            final response = await Dio().post(
+                              'http://10.0.2.2:5001/emo-share-diary/asia-northeast3/openaiAPI/weeklysummarize',
+                              data: {
+                                'content': oneWeekDiaryInfos,
+                              },
+                            );
 
                             autofocus = false;
 
-                            // _summaryTextEditingController.text = response.data;
+                            _summaryTextEditingController.text = response.data;
 
                             Scrollable.ensureVisible(
                               _topFocus.context!,

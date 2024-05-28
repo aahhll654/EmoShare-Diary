@@ -58,6 +58,63 @@ openAI.post("/summarize", async (req, res) => {
   }
 });
 
+openAI.post("/weeklysummarize", async (req, res) => {
+  try {
+    const dayOfWeek = [
+      "월요일 : ",
+      "화요일 : ",
+      "수요일 : ",
+      "목요일 : ",
+      "금요일 : ",
+      "토요일 : ",
+      "일요일 : ",
+    ];
+
+    let content = "";
+
+    for (let i = 0; i < 7; i++) {
+      if (req.body.content[i] == "") {
+        continue;
+      } else {
+        content += `${dayOfWeek[i]}${req.body.content[i]}\n\n`;
+      }
+    }
+
+    if (content == "") {
+      res.status(400).send("일기 내용이 없습니다.");
+      return;
+    }
+
+    const response = await axios.post(
+      "https://api.openai.com/v1/chat/completions",
+      {
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "system",
+            content:
+              "이번 주에 내가 주로 집중한 활동, 주요 성취, 그리고 특별한 사건 등을 포함한 요약을 요일별로 구분짓지 말고 3줄 정도로 작성해줘.",
+          },
+          {
+            role: "user",
+            content: content,
+          },
+        ],
+      },
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${whisperApiKey}`,
+        },
+      }
+    );
+
+    res.send(response.data.choices[0].message.content);
+  } catch (error) {
+    res.status(400).send(error.message);
+  }
+});
+
 openAI.post("/stt", async (req, res) => {
   const busboy = Busboy({ headers: req.headers });
 

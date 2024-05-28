@@ -14,6 +14,7 @@ class CustomTableCalendar extends ConsumerStatefulWidget {
   final void Function(DateTime)? onPageChanged;
   final void Function()? onTodayButtonTapped;
   final List<Map<String, dynamic>> monthlyEmotionList;
+  final List<Map<String, dynamic>> yearlyWeekDiaryCheckList;
   final bool isWeekSelected;
   final DateTime? firstDayOfWeek;
 
@@ -27,6 +28,7 @@ class CustomTableCalendar extends ConsumerStatefulWidget {
     required this.onPageChanged,
     required this.onTodayButtonTapped,
     required this.monthlyEmotionList,
+    required this.yearlyWeekDiaryCheckList,
     required this.isWeekSelected,
     this.firstDayOfWeek,
   });
@@ -101,6 +103,23 @@ class _CustomTableCalendarState extends ConsumerState<CustomTableCalendar> {
           );
         },
         weekNumberBuilder: (context, weekNumber) {
+          bool isChecked = false;
+
+          for (Map<String, dynamic> element
+              in widget.yearlyWeekDiaryCheckList) {
+            final int year = element['year'];
+            final int wknumber = element['weeknumber'];
+            if (year == widget.focusedDay.year && wknumber == weekNumber) {
+              if (widget.focusedDay.month == 1 && weekNumber > 50) {
+                isChecked = false;
+              } else if (widget.focusedDay.month == 12 && weekNumber < 3) {
+                isChecked = false;
+              } else {
+                isChecked = true;
+              }
+            }
+          }
+
           return Center(
             child: TextButton(
               onPressed: () {
@@ -108,10 +127,10 @@ class _CustomTableCalendarState extends ConsumerState<CustomTableCalendar> {
               },
               child: Text(
                 '$weekNumber주차',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 14.0,
                   fontWeight: FontWeight.w600,
-                  color: Colors.blue,
+                  color: isChecked ? Colors.blue : Colors.grey,
                 ),
               ),
             ),
