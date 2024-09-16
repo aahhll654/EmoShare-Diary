@@ -102,7 +102,7 @@ class _RecordingBoxState extends State<RecordingBox> {
                   'audio': await MultipartFile.fromFile(path!),
                 });
                 final response = await Dio().post(
-                  'http://10.0.2.2:5001/emo-share-diary/asia-northeast3/openaiAPI/stt',
+                  'http://10.0.2.2:5001/emoshare-diary/asia-northeast3/openaiAPI/stt',
                   data: formData,
                 );
 

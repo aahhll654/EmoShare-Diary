@@ -160,9 +160,11 @@ class _DiaryEditScreenState extends ConsumerState<DiaryEditScreen> {
 
     return PopScope(
       canPop: false,
-      onPopInvoked: (_) {
+      onPopInvokedWithResult: (didPop, _) async {
+        if (didPop) return;
+
         autofocus = false;
-        showDialog(
+        await showDialog(
           context: context,
           builder: (context) => AlertDialog(
             surfaceTintColor: BACKGROUND_COLOR,
@@ -177,7 +179,6 @@ class _DiaryEditScreenState extends ConsumerState<DiaryEditScreen> {
                   foregroundColor: Colors.black,
                 ),
                 onPressed: () {
-                  context.pop();
                   context.pop();
                 },
                 child: const Text('예'),
@@ -194,6 +195,10 @@ class _DiaryEditScreenState extends ConsumerState<DiaryEditScreen> {
             ],
           ),
         );
+
+        if (context.mounted) {
+          context.pop();
+        }
       },
       child: DefaultLayout(
         title: '${widget.date.year}년 ${widget.date.month}월 ${widget.date.day}일',
@@ -314,7 +319,7 @@ class _DiaryEditScreenState extends ConsumerState<DiaryEditScreen> {
                             );
 
                             final response = await Dio().post(
-                              'http://10.0.2.2:5001/emo-share-diary/asia-northeast3/openaiAPI/summarize',
+                              'http://10.0.2.2:5001/emoshare-diary/asia-northeast3/openaiAPI/summarize',
                               data: {
                                 'content': content,
                               },

@@ -153,9 +153,13 @@ class _DiaryEditScreenState extends ConsumerState<WeeklyDiaryEditScreen> {
 
     return PopScope(
       canPop: false,
-      onPopInvoked: (_) {
+      onPopInvokedWithResult: (didPop, _) async {
+        if (didPop) {
+          return;
+        }
+
         autofocus = false;
-        showDialog(
+        await showDialog(
           context: context,
           builder: (context) => AlertDialog(
             surfaceTintColor: BACKGROUND_COLOR,
@@ -170,7 +174,6 @@ class _DiaryEditScreenState extends ConsumerState<WeeklyDiaryEditScreen> {
                   foregroundColor: Colors.black,
                 ),
                 onPressed: () {
-                  context.pop();
                   context.pop();
                 },
                 child: const Text('예'),
@@ -187,6 +190,10 @@ class _DiaryEditScreenState extends ConsumerState<WeeklyDiaryEditScreen> {
             ],
           ),
         );
+
+        if (context.mounted) {
+          context.pop();
+        }
       },
       child: DefaultLayout(
         titleWidget: Column(
@@ -336,7 +343,7 @@ class _DiaryEditScreenState extends ConsumerState<WeeklyDiaryEditScreen> {
                             }
 
                             final response = await Dio().post(
-                              'http://10.0.2.2:5001/emo-share-diary/asia-northeast3/openaiAPI/weeklysummarize',
+                              'http://10.0.2.2:5001/emoshare-diary/asia-northeast3/openaiAPI/weeklysummarize',
                               data: {
                                 'content': oneWeekDiaryInfos,
                               },
