@@ -4,6 +4,7 @@ import 'package:emoshare_diary/diary/view/diary_detail_screen.dart';
 import 'package:emoshare_diary/diary/view/diary_edit_screen.dart';
 import 'package:emoshare_diary/diary/view/weekly_diary_detail_screen.dart';
 import 'package:emoshare_diary/diary/view/weekly_diary_edit_screen.dart';
+import 'package:emoshare_diary/user/view/login_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -64,11 +65,16 @@ class AuthProvider extends ChangeNotifier {
           name: SplashScreen.routeName,
           builder: (_, __) => const SplashScreen(),
         ),
+        GoRoute(
+          path: '/login',
+          name: LoginScreen.routeName,
+          builder: (_, __) => const LoginScreen(),
+        ),
       ];
 
   String? redirectLogic(BuildContext _, GoRouterState state) {
     if (state.fullPath == '/splash') {
-      return '/';
+      return '/login';
     }
 
     return null;
