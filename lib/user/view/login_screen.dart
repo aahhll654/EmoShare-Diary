@@ -1,20 +1,22 @@
 import 'package:emoshare_diary/common/const/colors.dart';
 import 'package:emoshare_diary/common/layout/default_layout.dart';
+import 'package:emoshare_diary/user/provider/user_provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
-class LoginScreen extends StatefulWidget {
+class LoginScreen extends ConsumerStatefulWidget {
   static String get routeName => 'login';
 
   const LoginScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  ConsumerState<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _LoginScreenState extends ConsumerState<LoginScreen> {
   bool isLoggingIn = false;
 
   @override
@@ -71,6 +73,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
                       if (credential.user != null) {
                         debugPrint(credential.user.toString());
+                        ref
+                            .read(userProvider.notifier)
+                            .setUser(credential.user!);
                         if (context.mounted) context.go('/');
                       }
 

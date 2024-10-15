@@ -2,8 +2,8 @@ import 'package:emoshare_diary/common/const/colors.dart';
 import 'package:emoshare_diary/common/layout/default_layout.dart';
 import 'package:emoshare_diary/concern/view/concern_screen.dart';
 import 'package:emoshare_diary/diary/view/diary_screen.dart';
-import 'package:emoshare_diary/menu/view/menu_screen.dart';
 import 'package:emoshare_diary/summary/view/summary_screen.dart';
+import 'package:emoshare_diary/user/view/my_page_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
@@ -96,7 +96,7 @@ class _RootTabState extends State<RootTab> with SingleTickerProviderStateMixin {
           currentIndex: index,
           items: const [
             BottomNavigationBarItem(
-              icon: Icon(Icons.menu_outlined),
+              icon: Icon(Icons.summarize_outlined),
               label: '',
             ),
             BottomNavigationBarItem(
@@ -104,11 +104,11 @@ class _RootTabState extends State<RootTab> with SingleTickerProviderStateMixin {
               label: '',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.summarize_outlined),
+              icon: Icon(Icons.mood_outlined),
               label: '',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.mood_outlined),
+              icon: Icon(Icons.person_outline),
               label: '',
             ),
           ],
@@ -117,10 +117,10 @@ class _RootTabState extends State<RootTab> with SingleTickerProviderStateMixin {
           physics: const NeverScrollableScrollPhysics(),
           controller: controller,
           children: const [
-            MenuScreen(),
-            DiaryScreen(),
             SummaryScreen(),
+            DiaryScreen(),
             ConcernScreen(),
+            MyPageScreen(),
           ],
         ),
       ),
