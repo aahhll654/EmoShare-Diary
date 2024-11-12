@@ -72,10 +72,10 @@ class _SummaryScreenState extends ConsumerState<SummaryScreen>
                       value: 2,
                       child: Text('주간 요약'),
                     ),
-                    DropdownMenuItem(
-                      value: 3,
-                      child: Text('월간 요약'),
-                    ),
+                    // DropdownMenuItem(
+                    //   value: 3,
+                    //   child: Text('월간 요약'),
+                    // ),
                   ],
                   onChanged: (value) {
                     setState(() {

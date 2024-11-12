@@ -126,6 +126,31 @@ class DiaryScrollView extends ConsumerWidget {
               color: PRIMARY_COLOR,
             ),
           ),
+        if (diaryInfo.image != null)
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 0.0),
+            sliver: SliverToBoxAdapter(
+              child: Center(
+                child: Container(
+                  width: MediaQuery.sizeOf(context).width / 3,
+                  height: MediaQuery.sizeOf(context).width / 3,
+                  decoration: BoxDecoration(
+                    border: Border.all(
+                      color: PRIMARY_COLOR,
+                      width: 2.0,
+                    ),
+                  ),
+                  child: Image.memory(
+                    diaryInfo.image!,
+                    fit: BoxFit.cover,
+                    cacheWidth: ((MediaQuery.sizeOf(context).width / 3) *
+                            MediaQuery.of(context).devicePixelRatio)
+                        .round(),
+                  ),
+                ),
+              ),
+            ),
+          ),
         SliverPadding(
           padding: const EdgeInsets.all(16.0),
           sliver: SliverToBoxAdapter(

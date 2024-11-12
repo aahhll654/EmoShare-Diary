@@ -44,9 +44,14 @@ class $DiaryInfosTable extends DiaryInfos
   late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
       'updated_at', aliasedName, false,
       type: DriftSqlType.dateTime, requiredDuringInsert: true);
+  static const VerificationMeta _imageMeta = const VerificationMeta('image');
+  @override
+  late final GeneratedColumn<Uint8List> image = GeneratedColumn<Uint8List>(
+      'image', aliasedName, true,
+      type: DriftSqlType.blob, requiredDuringInsert: false);
   @override
   List<GeneratedColumn> get $columns =>
-      [date, summary, content, emotion, createdAt, updatedAt];
+      [date, summary, content, emotion, createdAt, updatedAt, image];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -93,6 +98,10 @@ class $DiaryInfosTable extends DiaryInfos
     } else if (isInserting) {
       context.missing(_updatedAtMeta);
     }
+    if (data.containsKey('image')) {
+      context.handle(
+          _imageMeta, image.isAcceptableOrUnknown(data['image']!, _imageMeta));
+    }
     return context;
   }
 
@@ -114,6 +123,8 @@ class $DiaryInfosTable extends DiaryInfos
           .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
       updatedAt: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}updated_at'])!,
+      image: attachedDatabase.typeMapping
+          .read(DriftSqlType.blob, data['${effectivePrefix}image']),
     );
   }
 
@@ -130,13 +141,15 @@ class DiaryInfo extends DataClass implements Insertable<DiaryInfo> {
   final int emotion;
   final DateTime createdAt;
   final DateTime updatedAt;
+  final Uint8List? image;
   const DiaryInfo(
       {required this.date,
       required this.summary,
       required this.content,
       required this.emotion,
       required this.createdAt,
-      required this.updatedAt});
+      required this.updatedAt,
+      this.image});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -146,6 +159,9 @@ class DiaryInfo extends DataClass implements Insertable<DiaryInfo> {
     map['emotion'] = Variable<int>(emotion);
     map['created_at'] = Variable<DateTime>(createdAt);
     map['updated_at'] = Variable<DateTime>(updatedAt);
+    if (!nullToAbsent || image != null) {
+      map['image'] = Variable<Uint8List>(image);
+    }
     return map;
   }
 
@@ -157,6 +173,8 @@ class DiaryInfo extends DataClass implements Insertable<DiaryInfo> {
       emotion: Value(emotion),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
+      image:
+          image == null && nullToAbsent ? const Value.absent() : Value(image),
     );
   }
 
@@ -170,6 +188,7 @@ class DiaryInfo extends DataClass implements Insertable<DiaryInfo> {
       emotion: serializer.fromJson<int>(json['emotion']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+      image: serializer.fromJson<Uint8List?>(json['image']),
     );
   }
   @override
@@ -182,6 +201,7 @@ class DiaryInfo extends DataClass implements Insertable<DiaryInfo> {
       'emotion': serializer.toJson<int>(emotion),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
+      'image': serializer.toJson<Uint8List?>(image),
     };
   }
 
@@ -191,7 +211,8 @@ class DiaryInfo extends DataClass implements Insertable<DiaryInfo> {
           String? content,
           int? emotion,
           DateTime? createdAt,
-          DateTime? updatedAt}) =>
+          DateTime? updatedAt,
+          Value<Uint8List?> image = const Value.absent()}) =>
       DiaryInfo(
         date: date ?? this.date,
         summary: summary ?? this.summary,
@@ -199,7 +220,20 @@ class DiaryInfo extends DataClass implements Insertable<DiaryInfo> {
         emotion: emotion ?? this.emotion,
         createdAt: createdAt ?? this.createdAt,
         updatedAt: updatedAt ?? this.updatedAt,
+        image: image.present ? image.value : this.image,
       );
+  DiaryInfo copyWithCompanion(DiaryInfosCompanion data) {
+    return DiaryInfo(
+      date: data.date.present ? data.date.value : this.date,
+      summary: data.summary.present ? data.summary.value : this.summary,
+      content: data.content.present ? data.content.value : this.content,
+      emotion: data.emotion.present ? data.emotion.value : this.emotion,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      image: data.image.present ? data.image.value : this.image,
+    );
+  }
+
   @override
   String toString() {
     return (StringBuffer('DiaryInfo(')
@@ -208,14 +242,15 @@ class DiaryInfo extends DataClass implements Insertable<DiaryInfo> {
           ..write('content: $content, ')
           ..write('emotion: $emotion, ')
           ..write('createdAt: $createdAt, ')
-          ..write('updatedAt: $updatedAt')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('image: $image')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode =>
-      Object.hash(date, summary, content, emotion, createdAt, updatedAt);
+  int get hashCode => Object.hash(date, summary, content, emotion, createdAt,
+      updatedAt, $driftBlobEquality.hash(image));
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -225,7 +260,8 @@ class DiaryInfo extends DataClass implements Insertable<DiaryInfo> {
           other.content == this.content &&
           other.emotion == this.emotion &&
           other.createdAt == this.createdAt &&
-          other.updatedAt == this.updatedAt);
+          other.updatedAt == this.updatedAt &&
+          $driftBlobEquality.equals(other.image, this.image));
 }
 
 class DiaryInfosCompanion extends UpdateCompanion<DiaryInfo> {
@@ -235,6 +271,7 @@ class DiaryInfosCompanion extends UpdateCompanion<DiaryInfo> {
   final Value<int> emotion;
   final Value<DateTime> createdAt;
   final Value<DateTime> updatedAt;
+  final Value<Uint8List?> image;
   final Value<int> rowid;
   const DiaryInfosCompanion({
     this.date = const Value.absent(),
@@ -243,6 +280,7 @@ class DiaryInfosCompanion extends UpdateCompanion<DiaryInfo> {
     this.emotion = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
+    this.image = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   DiaryInfosCompanion.insert({
@@ -252,6 +290,7 @@ class DiaryInfosCompanion extends UpdateCompanion<DiaryInfo> {
     required int emotion,
     required DateTime createdAt,
     required DateTime updatedAt,
+    this.image = const Value.absent(),
     this.rowid = const Value.absent(),
   })  : date = Value(date),
         summary = Value(summary),
@@ -266,6 +305,7 @@ class DiaryInfosCompanion extends UpdateCompanion<DiaryInfo> {
     Expression<int>? emotion,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
+    Expression<Uint8List>? image,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -275,6 +315,7 @@ class DiaryInfosCompanion extends UpdateCompanion<DiaryInfo> {
       if (emotion != null) 'emotion': emotion,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
+      if (image != null) 'image': image,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -286,6 +327,7 @@ class DiaryInfosCompanion extends UpdateCompanion<DiaryInfo> {
       Value<int>? emotion,
       Value<DateTime>? createdAt,
       Value<DateTime>? updatedAt,
+      Value<Uint8List?>? image,
       Value<int>? rowid}) {
     return DiaryInfosCompanion(
       date: date ?? this.date,
@@ -294,6 +336,7 @@ class DiaryInfosCompanion extends UpdateCompanion<DiaryInfo> {
       emotion: emotion ?? this.emotion,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      image: image ?? this.image,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -319,6 +362,9 @@ class DiaryInfosCompanion extends UpdateCompanion<DiaryInfo> {
     if (updatedAt.present) {
       map['updated_at'] = Variable<DateTime>(updatedAt.value);
     }
+    if (image.present) {
+      map['image'] = Variable<Uint8List>(image.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -334,6 +380,7 @@ class DiaryInfosCompanion extends UpdateCompanion<DiaryInfo> {
           ..write('emotion: $emotion, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
+          ..write('image: $image, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -517,6 +564,17 @@ class WeeklyDiaryInfo extends DataClass implements Insertable<WeeklyDiaryInfo> {
         createdAt: createdAt ?? this.createdAt,
         updatedAt: updatedAt ?? this.updatedAt,
       );
+  WeeklyDiaryInfo copyWithCompanion(WeeklyDiaryInfosCompanion data) {
+    return WeeklyDiaryInfo(
+      year: data.year.present ? data.year.value : this.year,
+      weeknumber:
+          data.weeknumber.present ? data.weeknumber.value : this.weeknumber,
+      summary: data.summary.present ? data.summary.value : this.summary,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
   @override
   String toString() {
     return (StringBuffer('WeeklyDiaryInfo(')
@@ -818,6 +876,16 @@ class MonthlyDiaryInfo extends DataClass
         createdAt: createdAt ?? this.createdAt,
         updatedAt: updatedAt ?? this.updatedAt,
       );
+  MonthlyDiaryInfo copyWithCompanion(MonthlyDiaryInfosCompanion data) {
+    return MonthlyDiaryInfo(
+      year: data.year.present ? data.year.value : this.year,
+      month: data.month.present ? data.month.value : this.month,
+      summary: data.summary.present ? data.summary.value : this.summary,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
   @override
   String toString() {
     return (StringBuffer('MonthlyDiaryInfo(')
@@ -945,6 +1013,7 @@ class MonthlyDiaryInfosCompanion extends UpdateCompanion<MonthlyDiaryInfo> {
 
 abstract class _$LocalDatabase extends GeneratedDatabase {
   _$LocalDatabase(QueryExecutor e) : super(e);
+  $LocalDatabaseManager get managers => $LocalDatabaseManager(this);
   late final $DiaryInfosTable diaryInfos = $DiaryInfosTable(this);
   late final $WeeklyDiaryInfosTable weeklyDiaryInfos =
       $WeeklyDiaryInfosTable(this);
@@ -956,4 +1025,498 @@ abstract class _$LocalDatabase extends GeneratedDatabase {
   @override
   List<DatabaseSchemaEntity> get allSchemaEntities =>
       [diaryInfos, weeklyDiaryInfos, monthlyDiaryInfos];
+}
+
+typedef $$DiaryInfosTableCreateCompanionBuilder = DiaryInfosCompanion Function({
+  required DateTime date,
+  required String summary,
+  required String content,
+  required int emotion,
+  required DateTime createdAt,
+  required DateTime updatedAt,
+  Value<Uint8List?> image,
+  Value<int> rowid,
+});
+typedef $$DiaryInfosTableUpdateCompanionBuilder = DiaryInfosCompanion Function({
+  Value<DateTime> date,
+  Value<String> summary,
+  Value<String> content,
+  Value<int> emotion,
+  Value<DateTime> createdAt,
+  Value<DateTime> updatedAt,
+  Value<Uint8List?> image,
+  Value<int> rowid,
+});
+
+class $$DiaryInfosTableFilterComposer
+    extends FilterComposer<_$LocalDatabase, $DiaryInfosTable> {
+  $$DiaryInfosTableFilterComposer(super.$state);
+  ColumnFilters<DateTime> get date => $state.composableBuilder(
+      column: $state.table.date,
+      builder: (column, joinBuilders) =>
+          ColumnFilters(column, joinBuilders: joinBuilders));
+
+  ColumnFilters<String> get summary => $state.composableBuilder(
+      column: $state.table.summary,
+      builder: (column, joinBuilders) =>
+          ColumnFilters(column, joinBuilders: joinBuilders));
+
+  ColumnFilters<String> get content => $state.composableBuilder(
+      column: $state.table.content,
+      builder: (column, joinBuilders) =>
+          ColumnFilters(column, joinBuilders: joinBuilders));
+
+  ColumnFilters<int> get emotion => $state.composableBuilder(
+      column: $state.table.emotion,
+      builder: (column, joinBuilders) =>
+          ColumnFilters(column, joinBuilders: joinBuilders));
+
+  ColumnFilters<DateTime> get createdAt => $state.composableBuilder(
+      column: $state.table.createdAt,
+      builder: (column, joinBuilders) =>
+          ColumnFilters(column, joinBuilders: joinBuilders));
+
+  ColumnFilters<DateTime> get updatedAt => $state.composableBuilder(
+      column: $state.table.updatedAt,
+      builder: (column, joinBuilders) =>
+          ColumnFilters(column, joinBuilders: joinBuilders));
+
+  ColumnFilters<Uint8List> get image => $state.composableBuilder(
+      column: $state.table.image,
+      builder: (column, joinBuilders) =>
+          ColumnFilters(column, joinBuilders: joinBuilders));
+}
+
+class $$DiaryInfosTableOrderingComposer
+    extends OrderingComposer<_$LocalDatabase, $DiaryInfosTable> {
+  $$DiaryInfosTableOrderingComposer(super.$state);
+  ColumnOrderings<DateTime> get date => $state.composableBuilder(
+      column: $state.table.date,
+      builder: (column, joinBuilders) =>
+          ColumnOrderings(column, joinBuilders: joinBuilders));
+
+  ColumnOrderings<String> get summary => $state.composableBuilder(
+      column: $state.table.summary,
+      builder: (column, joinBuilders) =>
+          ColumnOrderings(column, joinBuilders: joinBuilders));
+
+  ColumnOrderings<String> get content => $state.composableBuilder(
+      column: $state.table.content,
+      builder: (column, joinBuilders) =>
+          ColumnOrderings(column, joinBuilders: joinBuilders));
+
+  ColumnOrderings<int> get emotion => $state.composableBuilder(
+      column: $state.table.emotion,
+      builder: (column, joinBuilders) =>
+          ColumnOrderings(column, joinBuilders: joinBuilders));
+
+  ColumnOrderings<DateTime> get createdAt => $state.composableBuilder(
+      column: $state.table.createdAt,
+      builder: (column, joinBuilders) =>
+          ColumnOrderings(column, joinBuilders: joinBuilders));
+
+  ColumnOrderings<DateTime> get updatedAt => $state.composableBuilder(
+      column: $state.table.updatedAt,
+      builder: (column, joinBuilders) =>
+          ColumnOrderings(column, joinBuilders: joinBuilders));
+
+  ColumnOrderings<Uint8List> get image => $state.composableBuilder(
+      column: $state.table.image,
+      builder: (column, joinBuilders) =>
+          ColumnOrderings(column, joinBuilders: joinBuilders));
+}
+
+class $$DiaryInfosTableTableManager extends RootTableManager<
+    _$LocalDatabase,
+    $DiaryInfosTable,
+    DiaryInfo,
+    $$DiaryInfosTableFilterComposer,
+    $$DiaryInfosTableOrderingComposer,
+    $$DiaryInfosTableCreateCompanionBuilder,
+    $$DiaryInfosTableUpdateCompanionBuilder,
+    (DiaryInfo, BaseReferences<_$LocalDatabase, $DiaryInfosTable, DiaryInfo>),
+    DiaryInfo,
+    PrefetchHooks Function()> {
+  $$DiaryInfosTableTableManager(_$LocalDatabase db, $DiaryInfosTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          filteringComposer:
+              $$DiaryInfosTableFilterComposer(ComposerState(db, table)),
+          orderingComposer:
+              $$DiaryInfosTableOrderingComposer(ComposerState(db, table)),
+          updateCompanionCallback: ({
+            Value<DateTime> date = const Value.absent(),
+            Value<String> summary = const Value.absent(),
+            Value<String> content = const Value.absent(),
+            Value<int> emotion = const Value.absent(),
+            Value<DateTime> createdAt = const Value.absent(),
+            Value<DateTime> updatedAt = const Value.absent(),
+            Value<Uint8List?> image = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              DiaryInfosCompanion(
+            date: date,
+            summary: summary,
+            content: content,
+            emotion: emotion,
+            createdAt: createdAt,
+            updatedAt: updatedAt,
+            image: image,
+            rowid: rowid,
+          ),
+          createCompanionCallback: ({
+            required DateTime date,
+            required String summary,
+            required String content,
+            required int emotion,
+            required DateTime createdAt,
+            required DateTime updatedAt,
+            Value<Uint8List?> image = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              DiaryInfosCompanion.insert(
+            date: date,
+            summary: summary,
+            content: content,
+            emotion: emotion,
+            createdAt: createdAt,
+            updatedAt: updatedAt,
+            image: image,
+            rowid: rowid,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$DiaryInfosTableProcessedTableManager = ProcessedTableManager<
+    _$LocalDatabase,
+    $DiaryInfosTable,
+    DiaryInfo,
+    $$DiaryInfosTableFilterComposer,
+    $$DiaryInfosTableOrderingComposer,
+    $$DiaryInfosTableCreateCompanionBuilder,
+    $$DiaryInfosTableUpdateCompanionBuilder,
+    (DiaryInfo, BaseReferences<_$LocalDatabase, $DiaryInfosTable, DiaryInfo>),
+    DiaryInfo,
+    PrefetchHooks Function()>;
+typedef $$WeeklyDiaryInfosTableCreateCompanionBuilder
+    = WeeklyDiaryInfosCompanion Function({
+  required int year,
+  required int weeknumber,
+  required String summary,
+  required DateTime createdAt,
+  required DateTime updatedAt,
+  Value<int> rowid,
+});
+typedef $$WeeklyDiaryInfosTableUpdateCompanionBuilder
+    = WeeklyDiaryInfosCompanion Function({
+  Value<int> year,
+  Value<int> weeknumber,
+  Value<String> summary,
+  Value<DateTime> createdAt,
+  Value<DateTime> updatedAt,
+  Value<int> rowid,
+});
+
+class $$WeeklyDiaryInfosTableFilterComposer
+    extends FilterComposer<_$LocalDatabase, $WeeklyDiaryInfosTable> {
+  $$WeeklyDiaryInfosTableFilterComposer(super.$state);
+  ColumnFilters<int> get year => $state.composableBuilder(
+      column: $state.table.year,
+      builder: (column, joinBuilders) =>
+          ColumnFilters(column, joinBuilders: joinBuilders));
+
+  ColumnFilters<int> get weeknumber => $state.composableBuilder(
+      column: $state.table.weeknumber,
+      builder: (column, joinBuilders) =>
+          ColumnFilters(column, joinBuilders: joinBuilders));
+
+  ColumnFilters<String> get summary => $state.composableBuilder(
+      column: $state.table.summary,
+      builder: (column, joinBuilders) =>
+          ColumnFilters(column, joinBuilders: joinBuilders));
+
+  ColumnFilters<DateTime> get createdAt => $state.composableBuilder(
+      column: $state.table.createdAt,
+      builder: (column, joinBuilders) =>
+          ColumnFilters(column, joinBuilders: joinBuilders));
+
+  ColumnFilters<DateTime> get updatedAt => $state.composableBuilder(
+      column: $state.table.updatedAt,
+      builder: (column, joinBuilders) =>
+          ColumnFilters(column, joinBuilders: joinBuilders));
+}
+
+class $$WeeklyDiaryInfosTableOrderingComposer
+    extends OrderingComposer<_$LocalDatabase, $WeeklyDiaryInfosTable> {
+  $$WeeklyDiaryInfosTableOrderingComposer(super.$state);
+  ColumnOrderings<int> get year => $state.composableBuilder(
+      column: $state.table.year,
+      builder: (column, joinBuilders) =>
+          ColumnOrderings(column, joinBuilders: joinBuilders));
+
+  ColumnOrderings<int> get weeknumber => $state.composableBuilder(
+      column: $state.table.weeknumber,
+      builder: (column, joinBuilders) =>
+          ColumnOrderings(column, joinBuilders: joinBuilders));
+
+  ColumnOrderings<String> get summary => $state.composableBuilder(
+      column: $state.table.summary,
+      builder: (column, joinBuilders) =>
+          ColumnOrderings(column, joinBuilders: joinBuilders));
+
+  ColumnOrderings<DateTime> get createdAt => $state.composableBuilder(
+      column: $state.table.createdAt,
+      builder: (column, joinBuilders) =>
+          ColumnOrderings(column, joinBuilders: joinBuilders));
+
+  ColumnOrderings<DateTime> get updatedAt => $state.composableBuilder(
+      column: $state.table.updatedAt,
+      builder: (column, joinBuilders) =>
+          ColumnOrderings(column, joinBuilders: joinBuilders));
+}
+
+class $$WeeklyDiaryInfosTableTableManager extends RootTableManager<
+    _$LocalDatabase,
+    $WeeklyDiaryInfosTable,
+    WeeklyDiaryInfo,
+    $$WeeklyDiaryInfosTableFilterComposer,
+    $$WeeklyDiaryInfosTableOrderingComposer,
+    $$WeeklyDiaryInfosTableCreateCompanionBuilder,
+    $$WeeklyDiaryInfosTableUpdateCompanionBuilder,
+    (
+      WeeklyDiaryInfo,
+      BaseReferences<_$LocalDatabase, $WeeklyDiaryInfosTable, WeeklyDiaryInfo>
+    ),
+    WeeklyDiaryInfo,
+    PrefetchHooks Function()> {
+  $$WeeklyDiaryInfosTableTableManager(
+      _$LocalDatabase db, $WeeklyDiaryInfosTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          filteringComposer:
+              $$WeeklyDiaryInfosTableFilterComposer(ComposerState(db, table)),
+          orderingComposer:
+              $$WeeklyDiaryInfosTableOrderingComposer(ComposerState(db, table)),
+          updateCompanionCallback: ({
+            Value<int> year = const Value.absent(),
+            Value<int> weeknumber = const Value.absent(),
+            Value<String> summary = const Value.absent(),
+            Value<DateTime> createdAt = const Value.absent(),
+            Value<DateTime> updatedAt = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              WeeklyDiaryInfosCompanion(
+            year: year,
+            weeknumber: weeknumber,
+            summary: summary,
+            createdAt: createdAt,
+            updatedAt: updatedAt,
+            rowid: rowid,
+          ),
+          createCompanionCallback: ({
+            required int year,
+            required int weeknumber,
+            required String summary,
+            required DateTime createdAt,
+            required DateTime updatedAt,
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              WeeklyDiaryInfosCompanion.insert(
+            year: year,
+            weeknumber: weeknumber,
+            summary: summary,
+            createdAt: createdAt,
+            updatedAt: updatedAt,
+            rowid: rowid,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$WeeklyDiaryInfosTableProcessedTableManager = ProcessedTableManager<
+    _$LocalDatabase,
+    $WeeklyDiaryInfosTable,
+    WeeklyDiaryInfo,
+    $$WeeklyDiaryInfosTableFilterComposer,
+    $$WeeklyDiaryInfosTableOrderingComposer,
+    $$WeeklyDiaryInfosTableCreateCompanionBuilder,
+    $$WeeklyDiaryInfosTableUpdateCompanionBuilder,
+    (
+      WeeklyDiaryInfo,
+      BaseReferences<_$LocalDatabase, $WeeklyDiaryInfosTable, WeeklyDiaryInfo>
+    ),
+    WeeklyDiaryInfo,
+    PrefetchHooks Function()>;
+typedef $$MonthlyDiaryInfosTableCreateCompanionBuilder
+    = MonthlyDiaryInfosCompanion Function({
+  required int year,
+  required int month,
+  required String summary,
+  required DateTime createdAt,
+  required DateTime updatedAt,
+  Value<int> rowid,
+});
+typedef $$MonthlyDiaryInfosTableUpdateCompanionBuilder
+    = MonthlyDiaryInfosCompanion Function({
+  Value<int> year,
+  Value<int> month,
+  Value<String> summary,
+  Value<DateTime> createdAt,
+  Value<DateTime> updatedAt,
+  Value<int> rowid,
+});
+
+class $$MonthlyDiaryInfosTableFilterComposer
+    extends FilterComposer<_$LocalDatabase, $MonthlyDiaryInfosTable> {
+  $$MonthlyDiaryInfosTableFilterComposer(super.$state);
+  ColumnFilters<int> get year => $state.composableBuilder(
+      column: $state.table.year,
+      builder: (column, joinBuilders) =>
+          ColumnFilters(column, joinBuilders: joinBuilders));
+
+  ColumnFilters<int> get month => $state.composableBuilder(
+      column: $state.table.month,
+      builder: (column, joinBuilders) =>
+          ColumnFilters(column, joinBuilders: joinBuilders));
+
+  ColumnFilters<String> get summary => $state.composableBuilder(
+      column: $state.table.summary,
+      builder: (column, joinBuilders) =>
+          ColumnFilters(column, joinBuilders: joinBuilders));
+
+  ColumnFilters<DateTime> get createdAt => $state.composableBuilder(
+      column: $state.table.createdAt,
+      builder: (column, joinBuilders) =>
+          ColumnFilters(column, joinBuilders: joinBuilders));
+
+  ColumnFilters<DateTime> get updatedAt => $state.composableBuilder(
+      column: $state.table.updatedAt,
+      builder: (column, joinBuilders) =>
+          ColumnFilters(column, joinBuilders: joinBuilders));
+}
+
+class $$MonthlyDiaryInfosTableOrderingComposer
+    extends OrderingComposer<_$LocalDatabase, $MonthlyDiaryInfosTable> {
+  $$MonthlyDiaryInfosTableOrderingComposer(super.$state);
+  ColumnOrderings<int> get year => $state.composableBuilder(
+      column: $state.table.year,
+      builder: (column, joinBuilders) =>
+          ColumnOrderings(column, joinBuilders: joinBuilders));
+
+  ColumnOrderings<int> get month => $state.composableBuilder(
+      column: $state.table.month,
+      builder: (column, joinBuilders) =>
+          ColumnOrderings(column, joinBuilders: joinBuilders));
+
+  ColumnOrderings<String> get summary => $state.composableBuilder(
+      column: $state.table.summary,
+      builder: (column, joinBuilders) =>
+          ColumnOrderings(column, joinBuilders: joinBuilders));
+
+  ColumnOrderings<DateTime> get createdAt => $state.composableBuilder(
+      column: $state.table.createdAt,
+      builder: (column, joinBuilders) =>
+          ColumnOrderings(column, joinBuilders: joinBuilders));
+
+  ColumnOrderings<DateTime> get updatedAt => $state.composableBuilder(
+      column: $state.table.updatedAt,
+      builder: (column, joinBuilders) =>
+          ColumnOrderings(column, joinBuilders: joinBuilders));
+}
+
+class $$MonthlyDiaryInfosTableTableManager extends RootTableManager<
+    _$LocalDatabase,
+    $MonthlyDiaryInfosTable,
+    MonthlyDiaryInfo,
+    $$MonthlyDiaryInfosTableFilterComposer,
+    $$MonthlyDiaryInfosTableOrderingComposer,
+    $$MonthlyDiaryInfosTableCreateCompanionBuilder,
+    $$MonthlyDiaryInfosTableUpdateCompanionBuilder,
+    (
+      MonthlyDiaryInfo,
+      BaseReferences<_$LocalDatabase, $MonthlyDiaryInfosTable, MonthlyDiaryInfo>
+    ),
+    MonthlyDiaryInfo,
+    PrefetchHooks Function()> {
+  $$MonthlyDiaryInfosTableTableManager(
+      _$LocalDatabase db, $MonthlyDiaryInfosTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          filteringComposer:
+              $$MonthlyDiaryInfosTableFilterComposer(ComposerState(db, table)),
+          orderingComposer: $$MonthlyDiaryInfosTableOrderingComposer(
+              ComposerState(db, table)),
+          updateCompanionCallback: ({
+            Value<int> year = const Value.absent(),
+            Value<int> month = const Value.absent(),
+            Value<String> summary = const Value.absent(),
+            Value<DateTime> createdAt = const Value.absent(),
+            Value<DateTime> updatedAt = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              MonthlyDiaryInfosCompanion(
+            year: year,
+            month: month,
+            summary: summary,
+            createdAt: createdAt,
+            updatedAt: updatedAt,
+            rowid: rowid,
+          ),
+          createCompanionCallback: ({
+            required int year,
+            required int month,
+            required String summary,
+            required DateTime createdAt,
+            required DateTime updatedAt,
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              MonthlyDiaryInfosCompanion.insert(
+            year: year,
+            month: month,
+            summary: summary,
+            createdAt: createdAt,
+            updatedAt: updatedAt,
+            rowid: rowid,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$MonthlyDiaryInfosTableProcessedTableManager = ProcessedTableManager<
+    _$LocalDatabase,
+    $MonthlyDiaryInfosTable,
+    MonthlyDiaryInfo,
+    $$MonthlyDiaryInfosTableFilterComposer,
+    $$MonthlyDiaryInfosTableOrderingComposer,
+    $$MonthlyDiaryInfosTableCreateCompanionBuilder,
+    $$MonthlyDiaryInfosTableUpdateCompanionBuilder,
+    (
+      MonthlyDiaryInfo,
+      BaseReferences<_$LocalDatabase, $MonthlyDiaryInfosTable, MonthlyDiaryInfo>
+    ),
+    MonthlyDiaryInfo,
+    PrefetchHooks Function()>;
+
+class $LocalDatabaseManager {
+  final _$LocalDatabase _db;
+  $LocalDatabaseManager(this._db);
+  $$DiaryInfosTableTableManager get diaryInfos =>
+      $$DiaryInfosTableTableManager(_db, _db.diaryInfos);
+  $$WeeklyDiaryInfosTableTableManager get weeklyDiaryInfos =>
+      $$WeeklyDiaryInfosTableTableManager(_db, _db.weeklyDiaryInfos);
+  $$MonthlyDiaryInfosTableTableManager get monthlyDiaryInfos =>
+      $$MonthlyDiaryInfosTableTableManager(_db, _db.monthlyDiaryInfos);
 }

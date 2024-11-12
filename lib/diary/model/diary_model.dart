@@ -7,6 +7,7 @@ class DiaryInfos extends Table {
   IntColumn get emotion => integer()();
   DateTimeColumn get createdAt => dateTime()();
   DateTimeColumn get updatedAt => dateTime()();
+  BlobColumn get image => blob().nullable()();
 
   @override
   Set<Column> get primaryKey => {date};

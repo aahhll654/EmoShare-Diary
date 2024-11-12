@@ -12,6 +12,7 @@ class EmotionAlertDialog extends StatefulWidget {
   final String content;
   final String summary;
   final int emotion;
+  final d.Uint8List? image;
 
   const EmotionAlertDialog({
     super.key,
@@ -21,6 +22,7 @@ class EmotionAlertDialog extends StatefulWidget {
     required this.content,
     required this.summary,
     required this.emotion,
+    this.image,
   });
 
   @override
@@ -92,6 +94,7 @@ class _EmotionAlertDialogState extends State<EmotionAlertDialog> {
                   emotion: d.Value(emotion),
                   createdAt: d.Value(DateTime.now()),
                   updatedAt: d.Value(DateTime.now()),
+                  image: d.Value(widget.image),
                 ),
               );
             } else {
@@ -102,6 +105,7 @@ class _EmotionAlertDialogState extends State<EmotionAlertDialog> {
                 widget.content,
                 widget.summary,
                 DateTime.now(),
+                image: widget.image,
               );
             }
 

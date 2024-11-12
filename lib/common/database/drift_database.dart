@@ -81,14 +81,21 @@ class LocalDatabase extends _$LocalDatabase {
   Future<int> createMonthlyDiaryInfo(MonthlyDiaryInfosCompanion data) =>
       into(monthlyDiaryInfos).insert(data);
 
-  Future<int> updateDiaryInfo(DateTime date, int changedEmotion,
-          String changedContent, String changedSummary, DateTime updatedAt) =>
+  Future<int> updateDiaryInfo(
+    DateTime date,
+    int changedEmotion,
+    String changedContent,
+    String changedSummary,
+    DateTime updatedAt, {
+    Uint8List? image,
+  }) =>
       (update(diaryInfos)..where((tbl) => tbl.date.equals(date))).write(
         DiaryInfosCompanion(
           emotion: Value(changedEmotion),
           content: Value(changedContent),
           summary: Value(changedSummary),
           updatedAt: Value(updatedAt),
+          image: Value(image),
         ),
       );
 

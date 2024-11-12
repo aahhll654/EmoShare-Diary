@@ -60,19 +60,49 @@ class DailySummary extends StatelessWidget {
                                 top: 24.0,
                                 bottom: 24.0,
                               ),
-                              child: SelectionArea(
-                                child: Text(
-                                  snapshot.data![index].summary == ''
-                                      ? '일기의 요약본이 없습니다.'
-                                      : snapshot.data![index].summary,
-                                  style: TextStyle(
-                                    fontSize: 16.0,
-                                    height: 1.6,
-                                    color: snapshot.data![index].summary == ''
-                                        ? Colors.grey
-                                        : null,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  if (snapshot.data![index].image != null)
+                                    Container(
+                                      width:
+                                          MediaQuery.sizeOf(context).width / 4,
+                                      height:
+                                          MediaQuery.sizeOf(context).width / 4,
+                                      decoration: BoxDecoration(
+                                        border: Border.all(
+                                          color: Colors.grey,
+                                          width: 2.0,
+                                        ),
+                                      ),
+                                      child: Image.memory(
+                                        snapshot.data![index].image!,
+                                        fit: BoxFit.cover,
+                                        cacheWidth:
+                                            ((MediaQuery.sizeOf(context).width /
+                                                        4) *
+                                                    MediaQuery.of(context)
+                                                        .devicePixelRatio)
+                                                .round(),
+                                      ),
+                                    ),
+                                  const SizedBox(height: 8.0),
+                                  SelectionArea(
+                                    child: Text(
+                                      snapshot.data![index].summary == ''
+                                          ? '일기의 요약본이 없습니다.'
+                                          : snapshot.data![index].summary,
+                                      style: TextStyle(
+                                        fontSize: 16.0,
+                                        height: 1.6,
+                                        color:
+                                            snapshot.data![index].summary == ''
+                                                ? Colors.grey
+                                                : null,
+                                      ),
+                                    ),
                                   ),
-                                ),
+                                ],
                               ),
                             ),
                           ),

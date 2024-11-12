@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:dio/dio.dart';
 import 'package:emoshare_diary/common/const/colors.dart';
 import 'package:emoshare_diary/common/database/drift_database.dart';
@@ -9,6 +11,7 @@ import 'package:emoshare_diary/diary/component/recording_box.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:keyboard_actions/keyboard_actions.dart';
 
 class DiaryEditScreen extends ConsumerStatefulWidget {
@@ -33,12 +36,14 @@ class _DiaryEditScreenState extends ConsumerState<DiaryEditScreen> {
   bool isLoading = true;
   bool isCreated = false;
   bool isInitState = true;
-  String content = '';
+  final TextEditingController _mainTextEditingController =
+      TextEditingController(text: '');
   String summary = '';
   DiaryInfo? diaryInfo;
   bool autofocus = true;
   final TextEditingController _summaryTextEditingController =
       TextEditingController(text: '');
+  MemoryImage? diaryImageProvider;
 
   KeyboardActionsConfig _buildKeyboardActionsConfig(BuildContext context) {
     return KeyboardActionsConfig(
@@ -107,10 +112,10 @@ class _DiaryEditScreenState extends ConsumerState<DiaryEditScreen> {
                           if (text != null) {
                             formKey.currentState!.save();
                             if (focusNode == _diaryFocus) {
-                              if (content != '') {
-                                content += ' ';
+                              if (_mainTextEditingController.text.isNotEmpty) {
+                                _mainTextEditingController.text += ' ';
                               }
-                              content += text;
+                              _mainTextEditingController.text += text;
                             } else if (focusNode == _summaryFocus) {
                               if (summary != '') {
                                 summary += ' ';
@@ -214,9 +219,10 @@ class _DiaryEditScreenState extends ConsumerState<DiaryEditScreen> {
                     isCreated: isCreated,
                     localDatabase: localDatabase,
                     date: widget.date,
-                    content: content,
+                    content: _mainTextEditingController.text,
                     summary: summary,
                     emotion: diaryInfo?.emotion ?? 2,
+                    image: diaryImageProvider?.bytes,
                   ),
                 );
               }
@@ -241,8 +247,16 @@ class _DiaryEditScreenState extends ConsumerState<DiaryEditScreen> {
                 isCreated = true;
                 autofocus = false;
                 diaryInfo = snapshot.data!;
-                content = diaryInfo!.content;
+                _mainTextEditingController.text = diaryInfo!.content;
                 _summaryTextEditingController.text = diaryInfo!.summary;
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  // 이미지 로드
+                  if (diaryInfo!.image != null) {
+                    setState(() {
+                      diaryImageProvider = MemoryImage(diaryInfo!.image!);
+                    });
+                  }
+                });
 
                 isInitState = false;
               }
@@ -290,18 +304,63 @@ class _DiaryEditScreenState extends ConsumerState<DiaryEditScreen> {
                             ),
                           ),
                         ),
+                        const SizedBox(height: 16.0),
+                        GestureDetector(
+                          onTap: () async {
+                            // 이미지 선택
+                            final image = await ImagePicker()
+                                .pickImage(source: ImageSource.gallery);
+
+                            if (image == null) return;
+
+                            final file = File(image.path);
+
+                            setState(() {
+                              diaryImageProvider =
+                                  MemoryImage(file.readAsBytesSync());
+                            });
+                          },
+                          child: Container(
+                            width: MediaQuery.sizeOf(context).width / 2,
+                            height: MediaQuery.sizeOf(context).width / 2,
+                            decoration: BoxDecoration(
+                              border: Border.all(
+                                color: PRIMARY_COLOR,
+                                width: 2.0,
+                              ),
+                            ),
+                            child: diaryImageProvider != null
+                                ? Image(
+                                    image: diaryImageProvider!,
+                                    fit: BoxFit.cover,
+                                  )
+                                : const Center(
+                                    child: Icon(
+                                      Icons.camera_alt,
+                                      color: PRIMARY_COLOR,
+                                      size: 48.0,
+                                    ),
+                                  ),
+                          ),
+                        ),
                         const SizedBox(height: 8.0),
+                        ElevatedButton(
+                          onPressed: () {
+                            setState(() {
+                              diaryImageProvider = null;
+                            });
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: PRIMARY_COLOR,
+                            foregroundColor: Colors.black,
+                          ),
+                          child: const Text('이미지 삭제'),
+                        ),
+                        const SizedBox(height: 16.0),
                         CustomTextFormField(
                           valueKey: const ValueKey(1),
-                          onSaved: (value) {
-                            if (value != null) {
-                              content = value;
-                            } else {
-                              content = '';
-                            }
-                          },
+                          textEditingController: _mainTextEditingController,
                           hintText: '일기를 작성해주세요.',
-                          initialValue: content,
                           minLines: 5,
                           maxLines: null,
                           autofocus: autofocus,
@@ -321,7 +380,7 @@ class _DiaryEditScreenState extends ConsumerState<DiaryEditScreen> {
                             final response = await Dio().post(
                               'http://10.0.2.2:5001/emoshare-diary/asia-northeast3/openaiAPI/summarize',
                               data: {
-                                'content': content,
+                                'content': _mainTextEditingController.text,
                               },
                             );
 
