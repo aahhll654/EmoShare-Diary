@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:drift/drift.dart' as d;
 import 'package:emoshare_diary/common/const/colors.dart';
+import 'package:emoshare_diary/common/const/data.dart';
 import 'package:emoshare_diary/common/database/drift_database.dart';
 import 'package:emoshare_diary/common/layout/default_layout.dart';
 import 'package:emoshare_diary/diary/component/custom_text_form_field.dart';
@@ -159,7 +160,7 @@ class _DiaryEditScreenState extends ConsumerState<WeeklyDiaryEditScreen> {
         }
 
         autofocus = false;
-        await showDialog(
+        final resp = await showDialog(
           context: context,
           builder: (context) => AlertDialog(
             surfaceTintColor: BACKGROUND_COLOR,
@@ -174,7 +175,7 @@ class _DiaryEditScreenState extends ConsumerState<WeeklyDiaryEditScreen> {
                   foregroundColor: Colors.black,
                 ),
                 onPressed: () {
-                  context.pop();
+                  context.pop(true);
                 },
                 child: const Text('예'),
               ),
@@ -190,6 +191,10 @@ class _DiaryEditScreenState extends ConsumerState<WeeklyDiaryEditScreen> {
             ],
           ),
         );
+
+        if (resp != true) {
+          return;
+        }
 
         if (context.mounted) {
           context.pop();
@@ -343,7 +348,7 @@ class _DiaryEditScreenState extends ConsumerState<WeeklyDiaryEditScreen> {
                             }
 
                             final response = await Dio().post(
-                              'http://10.0.2.2:5001/emoshare-diary/asia-northeast3/openaiAPI/weeklysummarize',
+                              '$baseUrl/weeklysummarize',
                               data: {
                                 'content': oneWeekDiaryInfos,
                               },

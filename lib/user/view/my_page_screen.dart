@@ -34,6 +34,17 @@ class MyPageScreen extends ConsumerWidget {
                       const SizedBox(height: 20.0),
                       ElevatedButton(
                         onPressed: () {
+                          context.go('/my-concern');
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: PRIMARY_COLOR,
+                          foregroundColor: Colors.black,
+                        ),
+                        child: const Text('내가 공유한 일기 보기'),
+                      ),
+                      const SizedBox(height: 8.0),
+                      ElevatedButton(
+                        onPressed: () {
                           ref.read(userProvider.notifier).signOut();
                           context.go('/login');
                         },

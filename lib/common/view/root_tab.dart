@@ -48,7 +48,7 @@ class _RootTabState extends State<RootTab> with SingleTickerProviderStateMixin {
   Widget build(BuildContext context) {
     return PopScope(
       canPop: false,
-      onPopInvoked: (_) {
+      onPopInvokedWithResult: (_, __) {
         showDialog(
           context: context,
           builder: (context) => AlertDialog(

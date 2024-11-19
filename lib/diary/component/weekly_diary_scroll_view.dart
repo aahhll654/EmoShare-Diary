@@ -64,6 +64,8 @@ class WeeklyDiaryScrollView extends ConsumerWidget {
                 backgroundColor: PRIMARY_COLOR,
                 actions: [
                   IconButton(
+                    padding: EdgeInsets.zero,
+                    visualDensity: VisualDensity.compact,
                     onPressed: () {
                       showDialog(
                         context: context,
@@ -111,6 +113,8 @@ class WeeklyDiaryScrollView extends ConsumerWidget {
                     ),
                   ),
                   IconButton(
+                    padding: EdgeInsets.zero,
+                    visualDensity: VisualDensity.compact,
                     onPressed: () {
                       context.goNamed(
                         WeeklyDiaryEditScreen.routeName,

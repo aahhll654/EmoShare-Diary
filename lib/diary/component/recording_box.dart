@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:dio/dio.dart';
 import 'package:emoshare_diary/common/const/colors.dart';
+import 'package:emoshare_diary/common/const/data.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:path_provider/path_provider.dart';
@@ -102,7 +103,7 @@ class _RecordingBoxState extends State<RecordingBox> {
                   'audio': await MultipartFile.fromFile(path!),
                 });
                 final response = await Dio().post(
-                  'http://10.0.2.2:5001/emoshare-diary/asia-northeast3/openaiAPI/stt',
+                  '$baseUrl/stt',
                   data: formData,
                 );
 

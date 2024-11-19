@@ -10,5 +10,9 @@ class UserStateNotifier extends StateNotifier<User?> {
 
   void setUser(User user) => state = user;
 
-  void signOut() => state = null;
+  void signOut() {
+    FirebaseAuth.instance.signOut();
+
+    state = null;
+  }
 }

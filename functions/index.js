@@ -20,12 +20,6 @@ exports.openaiAPI = functions.region("asia-northeast3").https.onRequest(app);
 
 const tmpdir = os.tmpdir();
 
-openAI.post("/loading", async (req, res) => {
-  await new Promise((resolve) => setTimeout(resolve, 15000));
-
-  res.send("ok");
-});
-
 openAI.post("/summarize", async (req, res) => {
   try {
     const response = await axios.post(

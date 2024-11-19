@@ -1,7 +1,11 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:emoshare_diary/common/const/colors.dart';
 import 'package:emoshare_diary/common/const/mood.dart';
 import 'package:emoshare_diary/common/database/drift_database.dart';
+import 'package:emoshare_diary/common/show_dialog/show_confirm_dialog.dart';
 import 'package:emoshare_diary/diary/view/diary_edit_screen.dart';
+import 'package:emoshare_diary/user/provider/user_provider.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -20,6 +24,8 @@ class DiaryScrollView extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final user = ref.watch(userProvider);
+
     return CustomScrollView(
       slivers: [
         SliverAppBar(
@@ -44,6 +50,8 @@ class DiaryScrollView extends ConsumerWidget {
           backgroundColor: PRIMARY_COLOR,
           actions: [
             IconButton(
+              padding: EdgeInsets.zero,
+              visualDensity: VisualDensity.compact,
               onPressed: () {
                 showDialog(
                   context: context,
@@ -88,6 +96,51 @@ class DiaryScrollView extends ConsumerWidget {
               ),
             ),
             IconButton(
+              padding: EdgeInsets.zero,
+              visualDensity: VisualDensity.compact,
+              onPressed: () async {
+                final result = await showConfirmationDialog(
+                  context: context,
+                  content: '일기를 공유하시겠습니까?',
+                  confirmText: '공유',
+                  cancelText: '취소',
+                );
+
+                if (result != true) {
+                  return;
+                }
+
+                if (user is! User) {
+                  showInfoDialog(
+                    context: context,
+                    content: '로그인 후 이용해주세요',
+                  );
+                  return;
+                }
+
+                FirebaseFirestore.instance.collection('diary_data').add(
+                  {
+                    'uid': user.uid,
+                    'emotion': diaryInfo.emotion,
+                    'summary': diaryInfo.summary,
+                    'content': diaryInfo.content,
+                    'createdAt': diaryInfo.createdAt,
+                    'uploadedAt': Timestamp.now(),
+                  },
+                );
+
+                showInfoDialog(
+                  context: context,
+                  content: '일기가 공유되었습니다',
+                );
+              },
+              icon: const Icon(
+                Icons.share,
+              ),
+            ),
+            IconButton(
+              padding: EdgeInsets.zero,
+              visualDensity: VisualDensity.compact,
               onPressed: () {
                 context.goNamed(
                   DiaryEditScreen.routeName,

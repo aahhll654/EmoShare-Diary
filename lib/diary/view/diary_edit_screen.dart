@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:emoshare_diary/common/const/colors.dart';
+import 'package:emoshare_diary/common/const/data.dart';
 import 'package:emoshare_diary/common/database/drift_database.dart';
 import 'package:emoshare_diary/common/layout/default_layout.dart';
 import 'package:emoshare_diary/diary/component/custom_text_form_field.dart';
@@ -160,8 +161,45 @@ class _DiaryEditScreenState extends ConsumerState<DiaryEditScreen> {
   }
 
   @override
+  void initState() {
+    super.initState();
+
+    ref.read(localDatabaseProvider).watchDiaryInfos(widget.date).first.then(
+      (value) {
+        setState(() {
+          diaryInfo = value;
+          isLoading = false;
+        });
+      },
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
     final localDatabase = ref.watch(localDatabaseProvider);
+
+    if (isLoading) {
+      return const Center(
+        child: CircularProgressIndicator(),
+      );
+    }
+
+    if (diaryInfo != null && isInitState) {
+      isCreated = true;
+      autofocus = false;
+      _mainTextEditingController.text = diaryInfo!.content;
+      _summaryTextEditingController.text = diaryInfo!.summary;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        // 이미지 로드
+        if (diaryInfo!.image != null) {
+          setState(() {
+            diaryImageProvider = MemoryImage(diaryInfo!.image!);
+          });
+        }
+      });
+
+      isInitState = false;
+    }
 
     return PopScope(
       canPop: false,
@@ -169,7 +207,7 @@ class _DiaryEditScreenState extends ConsumerState<DiaryEditScreen> {
         if (didPop) return;
 
         autofocus = false;
-        await showDialog(
+        final resp = await showDialog(
           context: context,
           builder: (context) => AlertDialog(
             surfaceTintColor: BACKGROUND_COLOR,
@@ -184,7 +222,7 @@ class _DiaryEditScreenState extends ConsumerState<DiaryEditScreen> {
                   foregroundColor: Colors.black,
                 ),
                 onPressed: () {
-                  context.pop();
+                  context.pop(true);
                 },
                 child: const Text('예'),
               ),
@@ -200,6 +238,10 @@ class _DiaryEditScreenState extends ConsumerState<DiaryEditScreen> {
             ],
           ),
         );
+
+        if (resp != true) {
+          return;
+        }
 
         if (context.mounted) {
           context.pop();
@@ -235,179 +277,148 @@ class _DiaryEditScreenState extends ConsumerState<DiaryEditScreen> {
             ),
           ),
         ],
-        child: FutureBuilder(
-          future: localDatabase.watchDiaryInfos(widget.date).first,
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(
-                child: CircularProgressIndicator(),
-              );
-            } else {
-              if (snapshot.data != null && isInitState) {
-                isCreated = true;
-                autofocus = false;
-                diaryInfo = snapshot.data!;
-                _mainTextEditingController.text = diaryInfo!.content;
-                _summaryTextEditingController.text = diaryInfo!.summary;
-                WidgetsBinding.instance.addPostFrameCallback((_) {
-                  // 이미지 로드
-                  if (diaryInfo!.image != null) {
-                    setState(() {
-                      diaryImageProvider = MemoryImage(diaryInfo!.image!);
-                    });
-                  }
-                });
-
-                isInitState = false;
-              }
-
-              isLoading = false;
-
-              return Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Form(
-                  key: formKey,
-                  child: KeyboardActions(
-                    config: _buildKeyboardActionsConfig(context),
-                    child: Column(
-                      children: [
-                        Focus(
-                          focusNode: _topFocus,
-                          child: const SizedBox(),
-                        ),
-                        CustomTextFormField(
-                          valueKey: const ValueKey(2),
-                          onSaved: (value) {
-                            if (value != null) {
-                              summary = value;
-                            } else {
-                              summary = '';
-                            }
-                          },
-                          hintText: '오늘의 일기를 간단하게 요약해주세요.\n자동요약 기능을 사용해보세요.',
-                          textEditingController: _summaryTextEditingController,
-                          minLines: 3,
-                          maxLines: null,
-                          inputBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(16.0),
-                            borderSide: const BorderSide(color: Colors.blue),
-                          ),
-                          focusNode: _summaryFocus,
-                        ),
-                        const SizedBox(height: 16.0),
-                        Container(
-                          height: 2.0,
-                          decoration: const BoxDecoration(
-                            color: Colors.grey,
-                            borderRadius: BorderRadius.all(
-                              Radius.circular(16.0),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 16.0),
-                        GestureDetector(
-                          onTap: () async {
-                            // 이미지 선택
-                            final image = await ImagePicker()
-                                .pickImage(source: ImageSource.gallery);
-
-                            if (image == null) return;
-
-                            final file = File(image.path);
-
-                            setState(() {
-                              diaryImageProvider =
-                                  MemoryImage(file.readAsBytesSync());
-                            });
-                          },
-                          child: Container(
-                            width: MediaQuery.sizeOf(context).width / 2,
-                            height: MediaQuery.sizeOf(context).width / 2,
-                            decoration: BoxDecoration(
-                              border: Border.all(
-                                color: PRIMARY_COLOR,
-                                width: 2.0,
-                              ),
-                            ),
-                            child: diaryImageProvider != null
-                                ? Image(
-                                    image: diaryImageProvider!,
-                                    fit: BoxFit.cover,
-                                  )
-                                : const Center(
-                                    child: Icon(
-                                      Icons.camera_alt,
-                                      color: PRIMARY_COLOR,
-                                      size: 48.0,
-                                    ),
-                                  ),
-                          ),
-                        ),
-                        const SizedBox(height: 8.0),
-                        ElevatedButton(
-                          onPressed: () {
-                            setState(() {
-                              diaryImageProvider = null;
-                            });
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: PRIMARY_COLOR,
-                            foregroundColor: Colors.black,
-                          ),
-                          child: const Text('이미지 삭제'),
-                        ),
-                        const SizedBox(height: 16.0),
-                        CustomTextFormField(
-                          valueKey: const ValueKey(1),
-                          textEditingController: _mainTextEditingController,
-                          hintText: '일기를 작성해주세요.',
-                          minLines: 5,
-                          maxLines: null,
-                          autofocus: autofocus,
-                          focusNode: _diaryFocus,
-                        ),
-                        const SizedBox(height: 16.0),
-                        ElevatedButton(
-                          onPressed: () async {
-                            formKey.currentState!.save();
-
-                            showDialog(
-                              barrierDismissible: false,
-                              context: context,
-                              builder: (context) => const LoadingAlertDialog(),
-                            );
-
-                            final response = await Dio().post(
-                              'http://10.0.2.2:5001/emoshare-diary/asia-northeast3/openaiAPI/summarize',
-                              data: {
-                                'content': _mainTextEditingController.text,
-                              },
-                            );
-
-                            autofocus = false;
-
-                            _summaryTextEditingController.text = response.data;
-
-                            Scrollable.ensureVisible(
-                              _topFocus.context!,
-                              duration: const Duration(milliseconds: 300),
-                            );
-
-                            context.pop();
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: PRIMARY_COLOR,
-                            foregroundColor: Colors.black,
-                          ),
-                          child: const Text('일기 자동요약'),
-                        ),
-                      ],
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Form(
+            key: formKey,
+            child: KeyboardActions(
+              config: _buildKeyboardActionsConfig(context),
+              child: Column(
+                children: [
+                  Focus(
+                    focusNode: _topFocus,
+                    child: const SizedBox(),
+                  ),
+                  CustomTextFormField(
+                    valueKey: const ValueKey(2),
+                    onSaved: (value) {
+                      if (value != null) {
+                        summary = value;
+                      } else {
+                        summary = '';
+                      }
+                    },
+                    hintText: '오늘의 일기를 간단하게 요약해주세요.\n자동요약 기능을 사용해보세요.',
+                    textEditingController: _summaryTextEditingController,
+                    minLines: 3,
+                    maxLines: null,
+                    inputBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16.0),
+                      borderSide: const BorderSide(color: Colors.blue),
+                    ),
+                    focusNode: _summaryFocus,
+                  ),
+                  const SizedBox(height: 16.0),
+                  Container(
+                    height: 2.0,
+                    decoration: const BoxDecoration(
+                      color: Colors.grey,
+                      borderRadius: BorderRadius.all(
+                        Radius.circular(16.0),
+                      ),
                     ),
                   ),
-                ),
-              );
-            }
-          },
+                  const SizedBox(height: 16.0),
+                  GestureDetector(
+                    onTap: () async {
+                      // 이미지 선택
+                      final image = await ImagePicker()
+                          .pickImage(source: ImageSource.gallery);
+
+                      if (image == null) return;
+
+                      final file = File(image.path);
+
+                      setState(() {
+                        diaryImageProvider =
+                            MemoryImage(file.readAsBytesSync());
+                      });
+                    },
+                    child: Container(
+                      width: MediaQuery.sizeOf(context).width / 2,
+                      height: MediaQuery.sizeOf(context).width / 2,
+                      decoration: BoxDecoration(
+                        border: Border.all(
+                          color: PRIMARY_COLOR,
+                          width: 2.0,
+                        ),
+                      ),
+                      child: diaryImageProvider != null
+                          ? Image(
+                              image: diaryImageProvider!,
+                              fit: BoxFit.cover,
+                            )
+                          : const Center(
+                              child: Icon(
+                                Icons.camera_alt,
+                                color: PRIMARY_COLOR,
+                                size: 48.0,
+                              ),
+                            ),
+                    ),
+                  ),
+                  const SizedBox(height: 8.0),
+                  ElevatedButton(
+                    onPressed: () {
+                      setState(() {
+                        diaryImageProvider = null;
+                      });
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: PRIMARY_COLOR,
+                      foregroundColor: Colors.black,
+                    ),
+                    child: const Text('이미지 삭제'),
+                  ),
+                  const SizedBox(height: 16.0),
+                  CustomTextFormField(
+                    valueKey: const ValueKey(1),
+                    textEditingController: _mainTextEditingController,
+                    hintText: '일기를 작성해주세요.',
+                    minLines: 5,
+                    maxLines: null,
+                    autofocus: autofocus,
+                    focusNode: _diaryFocus,
+                  ),
+                  const SizedBox(height: 16.0),
+                  ElevatedButton(
+                    onPressed: () async {
+                      formKey.currentState!.save();
+
+                      showDialog(
+                        barrierDismissible: false,
+                        context: context,
+                        builder: (context) => const LoadingAlertDialog(),
+                      );
+
+                      final response = await Dio().post(
+                        '$baseUrl/summarize',
+                        data: {
+                          'content': _mainTextEditingController.text,
+                        },
+                      );
+
+                      autofocus = false;
+
+                      _summaryTextEditingController.text = response.data;
+
+                      Scrollable.ensureVisible(
+                        _topFocus.context!,
+                        duration: const Duration(milliseconds: 300),
+                      );
+
+                      context.pop();
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: PRIMARY_COLOR,
+                      foregroundColor: Colors.black,
+                    ),
+                    child: const Text('일기 자동요약'),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ),
       ),
     );

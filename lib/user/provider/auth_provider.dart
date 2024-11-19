@@ -1,5 +1,6 @@
 import 'package:emoshare_diary/common/view/root_tab.dart';
 import 'package:emoshare_diary/common/view/splash_screen.dart';
+import 'package:emoshare_diary/concern/view/my_concern_screen.dart';
 import 'package:emoshare_diary/diary/view/diary_detail_screen.dart';
 import 'package:emoshare_diary/diary/view/diary_edit_screen.dart';
 import 'package:emoshare_diary/diary/view/weekly_diary_detail_screen.dart';
@@ -58,6 +59,11 @@ class AuthProvider extends ChangeNotifier {
                 weekNumber: int.parse(state.pathParameters['weekNumber']!),
               ),
             ),
+            GoRoute(
+              path: 'my-concern',
+              name: MyConcernScreen.routeName,
+              builder: (_, __) => const MyConcernScreen(),
+            ),
           ],
         ),
         GoRoute(
@@ -73,10 +79,6 @@ class AuthProvider extends ChangeNotifier {
       ];
 
   String? redirectLogic(BuildContext _, GoRouterState state) {
-    if (state.fullPath == '/splash') {
-      return '/login';
-    }
-
     return null;
   }
 }
